@@ -37,6 +37,8 @@ Display capability snapshot coverage verifies copied identity, extension counts,
 
 Timing analyzer coverage runs every valid DTD fixture through structural consistency checks. A fixed 1080p60 case verifies derived pixel counts, active-pixel ratio, horizontal rate, and refresh rate; a deliberately malformed snapshot verifies reporting of zero clock and inconsistent horizontal/vertical components without touching parser behavior.
 
+Display timing report coverage verifies aggregation of two valid document timings, then adds one deliberately malformed snapshot and checks the resulting 2-consistent/1-inconsistent summary. The CLI smoke test also verifies its displayed aggregate counts.
+
 `EdidInspect` is built as a third project in `PortableCore.sln`. Run `EdidInspect <edid.bin>` to inspect a file. `tests/RunEdidInspectTests.ps1` converts the checked-in hex fixture to temporary binary files and verifies valid 1080p60 output, checksum rejection, and invalid-size rejection. The smoke test passes for Debug/Release on Win32/x64; parser correctness is also tested directly by `PortableCoreTests`.
 
 ## Test layers

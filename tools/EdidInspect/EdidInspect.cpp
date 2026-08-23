@@ -1,6 +1,6 @@
 #include "EdidDocument.h"
 #include "DisplayCapabilitiesSnapshot.h"
-#include "TimingAnalyzer.h"
+#include "DisplayTimingReport.h"
 
 #include <array>
 #include <fstream>
@@ -53,6 +53,7 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 	const cru::core::DisplayCapabilitiesSnapshot capabilities(*edid);
+	const cru::core::DisplayTimingReport timing_report(capabilities);
 
 	std::cout << "Manufacturer: " << manufacturer_name(capabilities.manufacturer_id()) << '\n'
 		<< "Product code: 0x" << std::hex << std::uppercase << std::setw(4) << std::setfill('0') << capabilities.product_code() << std::dec << '\n'
@@ -61,12 +62,15 @@ int main(int argc, char *argv[])
 		<< "CTA extensions: " << capabilities.cta_extension_count() << '\n'
 		<< "Unparsed extensions: " << capabilities.unparsed_extension_count() << '\n'
 		<< "Detailed timings: " << capabilities.detailed_timings().size() << '\n'
+		<< "Consistent timings: " << timing_report.consistent_timing_count() << '\n'
+		<< "Inconsistent timings: " << timing_report.inconsistent_timing_count() << '\n'
 		<< "CTA advertised video modes: " << capabilities.advertised_video_modes().size() << "\n\n";
 
-	for (std::size_t index = 0; index < capabilities.detailed_timings().size(); ++index)
+	for (std::size_t index = 0; index < timing_report.timings().size(); ++index)
 	{
-		const auto &timing = capabilities.detailed_timings()[index];
-		const auto analysis = cru::core::TimingAnalyzer::analyze(timing);
+		const auto &entry = timing_report.timings()[index];
+		const auto &timing = entry.timing;
+		const auto &analysis = entry.analysis;
 		std::cout << index + 1 << ": " << timing.horizontal().active << 'x' << timing.vertical().active
 			<< (timing.interlaced() ? "i" : "p") << " @ "
 			<< timing.refresh_rate_millihertz() / 1000 << '.' << std::setw(3) << std::setfill('0') << timing.refresh_rate_millihertz() % 1000 << " Hz\n"

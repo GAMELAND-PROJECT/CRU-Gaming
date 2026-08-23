@@ -1,5 +1,6 @@
 #include "DetailedTimingDescriptor.h"
 #include "DisplayCapabilitiesSnapshot.h"
+#include "DisplayTimingReport.h"
 #include "EdidBaseBlock.h"
 #include "EdidDocument.h"
 #include "Cta861Extension.h"
@@ -290,17 +291,34 @@ void check_edid_document()
 		check_equal("EDID document", "advertised mode count", 2U, document->advertised_video_modes.size());
 		auto mutable_document = *document;
 		const cru::core::DisplayCapabilitiesSnapshot snapshot(mutable_document);
+		const cru::core::DisplayTimingReport report(snapshot);
 		check_equal("capabilities snapshot", "manufacturer ID", 0x10ACU, snapshot.manufacturer_id());
 		check_equal("capabilities snapshot", "CTA count", 1U, snapshot.cta_extension_count());
 		check_equal("capabilities snapshot", "unknown extension count", 0U, snapshot.unparsed_extension_count());
 		check_equal("capabilities snapshot", "DTD count", 2U, snapshot.detailed_timings().size());
 		check_equal("capabilities snapshot", "advertised mode count", 2U, snapshot.advertised_video_modes().size());
+		check_equal("display timing report", "timing count", 2U, report.timings().size());
+		check_equal("display timing report", "consistent count", 2U, report.consistent_timing_count());
+		check_equal("display timing report", "inconsistent count", 0U, report.inconsistent_timing_count());
+		check_equal("display timing report", "all consistent", true, report.all_timings_consistent());
 		mutable_document.detailed_timings.clear();
 		mutable_document.advertised_video_modes.clear();
 		mutable_document.cta_extensions.clear();
 		check_equal("capabilities snapshot independence", "CTA count", 1U, snapshot.cta_extension_count());
 		check_equal("capabilities snapshot independence", "DTD count", 2U, snapshot.detailed_timings().size());
 		check_equal("capabilities snapshot independence", "advertised mode count", 2U, snapshot.advertised_video_modes().size());
+
+		const AxisTiming bad_horizontal = {1920U, 88U, 44U, 147U, 280U, 2200U, SyncPolarity::Positive};
+		const AxisTiming bad_vertical = {1080U, 4U, 5U, 36U, 45U, 1124U, SyncPolarity::Positive};
+		mutable_document = *document;
+		mutable_document.detailed_timings.push_back(TimingSnapshot(
+			bad_horizontal, bad_vertical, 0U, 0U, 0U, ScanMode::Progressive,
+			TimingType::Manual, ReducedBlanking::Unknown));
+		const cru::core::DisplayCapabilitiesSnapshot mixed_snapshot(mutable_document);
+		const cru::core::DisplayTimingReport mixed_report(mixed_snapshot);
+		check_equal("mixed timing report", "consistent count", 2U, mixed_report.consistent_timing_count());
+		check_equal("mixed timing report", "inconsistent count", 1U, mixed_report.inconsistent_timing_count());
+		check_equal("mixed timing report", "all consistent", false, mixed_report.all_timings_consistent());
 	}
 
 	auto truncated = bytes; truncated.resize(128U);

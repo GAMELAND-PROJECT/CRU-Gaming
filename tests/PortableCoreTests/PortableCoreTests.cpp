@@ -12,6 +12,7 @@
 #include "TimingAnalyzer.h"
 #include "MonitorRangeLimits.h"
 #include "RangeCapabilityEstimator.h"
+#include "TimingCandidateGenerator.h"
 
 #include <algorithm>
 #include <array>
@@ -144,6 +145,26 @@ void check_timing_analyzer()
 	check_equal("range estimator", "limiting source", cru::core::EstimatedLimitSource::HorizontalScan,
 		estimate.estimated_limit_source);
 	check_equal("range estimator", "exceeds advertised", true, estimate.estimate_exceeds_advertised_vertical_limit);
+	const auto candidates = cru::core::TimingCandidateGenerator::generate(timing, estimate);
+	check_equal("timing candidates", "count", 32U, candidates.candidates.size());
+	check_equal("timing candidates", "truncated", false, candidates.truncated);
+	if (candidates.candidates.size() == 32U) {
+		check_equal("timing candidates", "first refresh", 60000U, candidates.candidates.front().refresh_rate_millihertz);
+		check_equal("timing candidates", "first pixel clock", 148500000U, candidates.candidates.front().required_pixel_clock_hz);
+		check_equal("timing candidates", "first horizontal rate", 67500U, candidates.candidates.front().required_horizontal_rate_hz);
+		check_equal("timing candidates", "first classification", cru::core::TimingCandidateClassification::Advertised,
+			candidates.candidates.front().classification);
+		check_equal("timing candidates", "145 Hz classification", cru::core::TimingCandidateClassification::Experimental,
+			candidates.candidates[17].classification);
+		check_equal("timing candidates", "ceiling refresh", 213333U, candidates.candidates.back().refresh_rate_millihertz);
+		check_equal("timing candidates", "ceiling representable", true,
+			candidates.candidates.back().edid_detailed_timing_representable);
+	}
+	const auto truncated_candidates = cru::core::TimingCandidateGenerator::generate(timing, estimate, 60000U, 5000U, 3U);
+	check_equal("timing candidates truncated", "count", 3U, truncated_candidates.candidates.size());
+	check_equal("timing candidates truncated", "truncated", true, truncated_candidates.truncated);
+	check_equal("timing candidates invalid step", "count", 0U,
+		cru::core::TimingCandidateGenerator::generate(timing, estimate, 60000U, 0U).candidates.size());
 
 	const cru::core::MonitorRangeLimits pixel_limited = {
 		48U, 85U, 30U, 255U, 150000000U, cru::core::SecondaryTimingFormula::DefaultGtf};

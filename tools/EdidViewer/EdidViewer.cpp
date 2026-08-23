@@ -4,6 +4,7 @@
 #include "EdidDocument.h"
 #include "MonitorDiscovery.h"
 #include "RangeCapabilityEstimator.h"
+#include "TimingCandidateGenerator.h"
 
 #include <windows.h>
 #include <commdlg.h>
@@ -113,6 +114,22 @@ std::wstring format_report(const cru::core::DisplayCapabilitiesSnapshot &capabil
 			append_refresh_rate(text, estimate.estimated_timing_ceiling_millihertz);
 			text << L" Hz" << (estimate.estimate_exceeds_advertised_vertical_limit ? L" (experimental territory)" : L"")
 				<< L"\r\n";
+			const auto candidates = cru::core::TimingCandidateGenerator::generate(timing, estimate);
+			std::size_t advertised_count = 0U;
+			for (const auto &candidate : candidates.candidates)
+				if (candidate.classification == cru::core::TimingCandidateClassification::Advertised) ++advertised_count;
+			text << L"   Read-only candidates: " << candidates.candidates.size() << L" ("
+				<< advertised_count << L" advertised, " << candidates.candidates.size() - advertised_count
+				<< L" experimental)\r\n   ";
+			for (std::size_t candidate_index = 0U; candidate_index < candidates.candidates.size(); ++candidate_index)
+			{
+				const auto &candidate = candidates.candidates[candidate_index];
+				append_refresh_rate(text, candidate.refresh_rate_millihertz);
+				text << (candidate.classification == cru::core::TimingCandidateClassification::Advertised ? L"[A]" : L"[E]");
+				if (candidate_index + 1U != candidates.candidates.size()) text << L", ";
+				if ((candidate_index + 1U) % 8U == 0U) text << L"\r\n   ";
+			}
+			text << L"\r\n";
 		}
 	}
 

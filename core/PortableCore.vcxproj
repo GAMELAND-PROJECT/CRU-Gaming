@@ -55,6 +55,7 @@
     <ClInclude Include="include\TimingSnapshot.h" />
 	<ClInclude Include="include\MonitorRangeLimits.h" />
 	<ClInclude Include="include\RangeCapabilityEstimator.h" />
+	<ClInclude Include="include\TimingCandidateGenerator.h" />
 	<ClInclude Include="include\TimingAnalyzer.h" />
   </ItemGroup>
   <ItemGroup>
@@ -72,6 +73,7 @@
     <ClCompile Include="src\TimingSnapshot.cpp" />
 	<ClCompile Include="src\MonitorRangeLimits.cpp" />
 	<ClCompile Include="src\RangeCapabilityEstimator.cpp" />
+	<ClCompile Include="src\TimingCandidateGenerator.cpp" />
 	<ClCompile Include="src\TimingAnalyzer.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

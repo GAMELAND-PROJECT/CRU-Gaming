@@ -4,6 +4,18 @@
 
 This document describes the code in this repository as it exists. It does not describe the proposed CRU Gaming target architecture. The main application is legacy C++Builder/VCL code, with parsing, serialization, Windows integration, and UI concerns coupled in the same executable.
 
+The repository now also contains an independent Portable Core. This does not replace or alter the legacy application:
+
+```text
+CRU Legacy (behavioral reference)
+        ↓ fixed characterization fixtures
+Portable Core (standard C++17)
+        ↓
+MSVC 2022 / platform-independent library
+```
+
+`PortableCore.sln` builds `core/PortableCore.vcxproj` and `tests/PortableCoreTests/PortableCoreTests.vcxproj`. The core has no VCL, C++Builder, Borland RTL, Win32, Registry, GPU vendor, GUI, serializer, display-driver, or hardware dependency. Its current scope is a read-only parser for the standard 18-byte EDID detailed timing descriptor and an explicitly-unitized timing value object.
+
 ## Build status
 
 | Field | Finding |
@@ -75,6 +87,8 @@ The main CRU executable does not restart the driver itself. `RESTART-DISPLAY-DRI
 | Vendor EDID acquisition | `AMDDisplayClass.cpp/.h`, `NVIDIADisplayClass.cpp/.h`, `EDIDListClass.cpp/.h` | `LoadEDIDList`; obtain active EDID and match it to instances | Runtime-loaded ADL/NVAPI DLLs and locally declared ABI structures | Driver-version/ABI risk. Read-only today; not a capability or settings backend. |
 | Base detailed timings | `DetailedResolutionClass.cpp/.h`, `DetailedResolutionListClass.cpp/.h` | `Read`, `Write`, timing calculations, rate/clock getters, validation | `ItemClass`/`ListClass`; integer/fixed-point timing fields | Best reusable timing seed, but mixed representation/calculation and legacy assumptions require characterization tests first. |
 | Timing snapshot | `TimingSnapshotClass.h` | Copy an existing detailed timing into a read-only, VCL-free value object | Getter-compatible timing source; normally `DetailedResolutionClass` | Low risk: no serialization, registry, UI, or hardware access. Future analyzers should consume this layer. |
+| Portable timing model | `core/include/TimingSnapshot.h`, `core/src/TimingSnapshot.cpp` | Standard C++ timing value with explicit Hz/mHz units and scan/timing/blanking enums | C++ standard library only | Independent of Legacy; intended input to future analyzers. |
+| Portable EDID DTD reader | `core/include/DetailedTimingDescriptor.h`, `core/src/DetailedTimingDescriptor.cpp` | Parse one fixed 18-byte descriptor into a portable snapshot | `std::array`, `std::optional`, portable timing model | Read-only; deliberately has no serialization or EDID document ownership. |
 | Standard/established timings | `StandardResolutionClass*`, `StandardResolutionListClass*`, `EstablishedResolutionListClass*` | EDID standard and established timing byte handling | Raw list slots | Serialization-sensitive; do not modify initially. |
 | Extension blocks | `ExtensionBlockClass.cpp/.h`, `ExtensionBlockListClass.cpp/.h` | CEA-861, VTB-EXT, DisplayID, default/raw extension dispatch and layout | Detailed/standard/CEA/DisplayID lists | Central 128-byte layout and checksum boundary; high risk. |
 | CEA/CTA data blocks | `CEADataListClass.cpp/.h` | Generic data-block collection, tag/OUI/extended-tag classification, read/write, editability | `ListClass`, raw slots up to 32 bytes | Recognizes more blocks than it can semantically edit; preserve unknown bytes. |

@@ -2,9 +2,22 @@
 
 ## Current state
 
-No automated test project or test framework is present. The main application is tied to BDS 2006, VCL, Borland extensions (`__fastcall`, `PACKAGE`, form resources), and Win32 APIs. The audit environment lacks the required compilers, so no baseline build or executable test was possible.
+The legacy application remains tied to BDS 2006, VCL, Borland extensions (`__fastcall`, `PACKAGE`, form resources), and Win32 APIs. BDS is not installed, so the unchanged legacy executable still cannot be built in this environment. The independent Portable Core has an MSVC 2022 solution and a dependency-free console test executable.
 
 The practical first framework is a minimal native C++ console test executable compatible with the compiler used for the production source, using a small assertion harness and binary fixtures. This avoids imposing a modern framework that BDS 2006 may not compile. In parallel, new portable analysis code may use a current C++ test runner only after the unchanged legacy build is reproducible and a compiler compatibility boundary is documented.
+
+## Portable Core build and test
+
+Open `PortableCore.sln` in Visual Studio 2022 or build it with MSBuild. The projects use toolset `v143`, C++17, warning level 4, warnings as errors, no precompiled header, and support Debug/Release on Win32/x64.
+
+```text
+MSBuild PortableCore.sln /m /t:Build /p:Configuration=Debug /p:Platform=x64
+x64\Debug\PortableCoreTests.exe
+```
+
+The baseline implementation was built and executed successfully in all four configuration/platform combinations with zero warnings and zero errors. Each run passed five fixed real DTD fixtures (CTA 1080p60, CRU CVT-RB 1080p144, CRU CVT-RB 1440p144, CRU CVT-RB 1080p60, CTA 1080i60) plus invalid zero-clock and invalid-blanking inputs.
+
+The test invokes only `DetailedTimingDescriptor::parse`; expected values are fixed constants derived from the legacy characterization fixtures. It verifies every timing component, explicit pixel-clock/rate units, polarity, scan mode, manual timing type, and `ReducedBlanking::Unknown`. Reduced blanking is intentionally unknown because the 18-byte DTD does not encode which formula produced its numbers.
 
 ## Test layers
 

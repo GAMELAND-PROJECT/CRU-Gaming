@@ -23,6 +23,20 @@ The production source uses classic C++Builder pointer-to-member syntax, so curre
 
 An 18-byte EDID detailed timing descriptor stores pixel clock in an unsigned 16-bit field in 10 kHz units, limiting it to 655.35 MHz. A 2560×1440 progressive mode at 240 Hz requires more than 884.736 MHz even before blanking, so that requested case cannot be represented by this format. The fixture does not substitute a truncated or mislabeled descriptor. Coverage for that mode requires a format with a wider clock representation, such as the existing DisplayID detailed timing path, and belongs in a separate fixture.
 
+## One-command build and inspection
+
+The build helper locates an existing Visual Studio installation, builds one configuration, and runs both test layers:
+
+```powershell
+.\tools\BuildPortableCore.ps1 -Configuration Debug -Platform x64
+```
+
+It does not install or retarget Visual Studio. To inspect a binary EDID and save JSON:
+
+```powershell
+.\tools\InspectEdid.ps1 .\monitor-edid.bin -Json -OutputPath .\monitor-report.json
+```
+
 ## EdidInspect smoke test
 
 `fixtures/edid-1080p60.hex` is the reviewable source for a valid 128-byte EDID fixture. The smoke-test script converts it to temporary binary files and deletes them afterward.

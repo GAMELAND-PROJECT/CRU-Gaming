@@ -39,7 +39,7 @@ Timing analyzer coverage runs every valid DTD fixture through structural consist
 
 Display timing report coverage verifies aggregation of two valid document timings, then adds one deliberately malformed snapshot and checks the resulting 2-consistent/1-inconsistent summary. The CLI smoke test also verifies its displayed aggregate counts.
 
-`EdidInspect` is built as a third project in `PortableCore.sln`. Run `EdidInspect <edid.bin>` to inspect a file. `tests/RunEdidInspectTests.ps1` converts the checked-in hex fixture to temporary binary files and verifies valid 1080p60 output, checksum rejection, and invalid-size rejection. The smoke test passes for Debug/Release on Win32/x64; parser correctness is also tested directly by `PortableCoreTests`.
+`EdidInspect` is built as a third project in `PortableCore.sln`. Run `EdidInspect <edid.bin>` for text or `EdidInspect --json <edid.bin>` for schema-versioned JSON. `tests/RunEdidInspectTests.ps1` converts the checked-in hex fixture to temporary binary files and verifies text and parsed JSON for base-only and CTA EDIDs, plus checksum and invalid-size rejection. The smoke test passes for Debug/Release on Win32/x64; parser correctness is also tested directly by `PortableCoreTests`.
 
 ## Test layers
 

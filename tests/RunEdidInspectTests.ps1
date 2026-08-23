@@ -25,6 +25,15 @@ try {
     if ($LASTEXITCODE -ne 0 -or $text -notmatch '1920x1080p @ 60\.000 Hz' -or $text -notmatch 'Consistent timings: 1' -or $text -notmatch 'Inconsistent timings: 0' -or $text -notmatch 'Internal consistency: OK') {
         throw "Valid EDID inspection failed:`n$output"
     }
+	$jsonOutput = & $executablePath --json $validPath 2>&1
+	if ($LASTEXITCODE -ne 0) {
+		throw "Valid EDID JSON inspection failed:`n$jsonOutput"
+	}
+	$json = ($jsonOutput -join [Environment]::NewLine) | ConvertFrom-Json
+	if ($json.schema_version -ne 1 -or $json.timing_summary.total -ne 1 -or
+		$json.timing_summary.consistent -ne 1 -or $json.detailed_timings[0].pixel_clock_hz -ne 148500000) {
+		throw "Valid EDID JSON data was unexpected:`n$jsonOutput"
+	}
 
     $baseWithExtension = [byte[]]$bytes.Clone()
     $baseWithExtension[126] = 1
@@ -52,6 +61,12 @@ try {
     if ($LASTEXITCODE -ne 0 -or $text -notmatch 'CTA advertised video modes: 2' -or $text -notmatch 'VIC 16: 1920x1080p @ 60 Hz') {
         throw "CTA EDID inspection failed:`n$output"
     }
+	$jsonOutput = & $executablePath --json $ctaPath 2>&1
+	$json = ($jsonOutput -join [Environment]::NewLine) | ConvertFrom-Json
+	if ($LASTEXITCODE -ne 0 -or $json.display.cta_extension_count -ne 1 -or
+		$json.advertised_video_modes.Count -ne 2 -or $json.advertised_video_modes[0].vic -ne 16) {
+		throw "CTA EDID JSON data was unexpected:`n$jsonOutput"
+	}
 
     $badChecksum = [byte[]]$bytes.Clone()
     $badChecksum[127] = $badChecksum[127] -bxor 1

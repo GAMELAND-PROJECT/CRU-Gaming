@@ -31,4 +31,10 @@ An 18-byte EDID detailed timing descriptor stores pixel clock in an unsigned 16-
 .\tests\RunEdidInspectTests.ps1 -Executable .\x64\Debug\EdidInspect.exe
 ```
 
+The CLI also supports stable machine-readable output:
+
+```powershell
+.\x64\Debug\EdidInspect.exe --json .\monitor-edid.bin
+```
+
 It verifies successful reporting of 1920×1080p60 and rejection of a corrupted checksum and a 127-byte file.

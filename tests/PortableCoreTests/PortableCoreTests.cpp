@@ -162,7 +162,19 @@ void check_cta_extension()
 	bytes[127] = static_cast<std::uint8_t>(0U - sum);
 	const auto parsed = cru::core::Cta861ExtensionParser::parse(bytes);
 	check_equal("CTA", "accepted", true, parsed.has_value());
-	if (parsed) { check_equal("CTA", "blocks", 1U, parsed->data_blocks.size()); check_equal("CTA", "DTDs", 1U, parsed->detailed_timings.size()); }
+	if (parsed) {
+		check_equal("CTA", "revision", 3U, parsed->revision);
+		check_equal("CTA", "basic audio", true, parsed->basic_audio);
+		check_equal("CTA", "YCbCr 4:4:4", true, parsed->ycbcr444);
+		check_equal("CTA", "blocks", 1U, parsed->data_blocks.size());
+		check_equal("CTA", "block tag", 2U, parsed->data_blocks[0].tag);
+		check_equal("CTA", "block payload", 2U, parsed->data_blocks[0].payload.size());
+		check_equal("CTA", "DTDs", 1U, parsed->detailed_timings.size());
+	}
+	auto bad_tag = bytes; bad_tag[0] = 0x03; bad_tag[127] = static_cast<std::uint8_t>(bad_tag[127] - 1U);
+	check_equal("CTA tag", "accepted", false, cru::core::Cta861ExtensionParser::parse(bad_tag).has_value());
+	auto bad_checksum = bytes; bad_checksum[127] ^= 1U;
+	check_equal("CTA checksum", "accepted", false, cru::core::Cta861ExtensionParser::parse(bad_checksum).has_value());
 	bytes[4] = 0x5F; sum = 0; for (std::size_t i = 0; i < 127; ++i) sum += bytes[i]; bytes[127] = static_cast<std::uint8_t>(0U - sum);
 	check_equal("CTA overrun", "accepted", false, cru::core::Cta861ExtensionParser::parse(bytes).has_value());
 }
@@ -219,6 +231,6 @@ int main()
 	if (failures != 0)
 		return 1;
 
-	std::printf("Portable Core: %zu DTD fixtures, base EDID parsing, and invalid-input checks passed.\n", timings.size());
+	std::printf("Portable Core: %zu DTD fixtures, base EDID/CTA parsing, and invalid-input checks passed.\n", timings.size());
 	return 0;
 }

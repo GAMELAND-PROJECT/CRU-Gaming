@@ -43,7 +43,7 @@ The first read-only GUI is built with the same solution. Launch it with:
 .\x64\Debug\EdidViewer.exe
 ```
 
-Use **Open EDID...** to select a `.bin` or `.dat` file. The viewer never reads a monitor or writes an override.
+The viewer automatically lists connected monitors with readable EDIDs. Use **Refresh monitors** after a connection change, or **Open EDID...** to select a `.bin` or `.dat` file. Discovery is read-only and the viewer never writes an override or changes a display mode.
 
 ## EdidInspect smoke test
 

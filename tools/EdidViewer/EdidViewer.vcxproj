@@ -13,9 +13,10 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ItemDefinitionGroup>
     <ClCompile><WarningLevel>Level4</WarningLevel><TreatWarningAsError>true</TreatWarningAsError><ConformanceMode>true</ConformanceMode><LanguageStandard>stdcpp17</LanguageStandard><AdditionalIncludeDirectories>$(ProjectDir)..\..\core\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories><PrecompiledHeader>NotUsing</PrecompiledHeader></ClCompile>
-    <Link><SubSystem>Windows</SubSystem><AdditionalDependencies>Comdlg32.lib;%(AdditionalDependencies)</AdditionalDependencies></Link>
+    <Link><SubSystem>Windows</SubSystem><AdditionalDependencies>Comdlg32.lib;Setupapi.lib;Advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies></Link>
   </ItemDefinitionGroup>
-  <ItemGroup><ClCompile Include="EdidViewer.cpp" /></ItemGroup>
+  <ItemGroup><ClCompile Include="EdidViewer.cpp" /><ClCompile Include="MonitorDiscovery.cpp" /></ItemGroup>
+  <ItemGroup><ClInclude Include="MonitorDiscovery.h" /></ItemGroup>
   <ItemGroup><ProjectReference Include="..\..\core\PortableCore.vcxproj"><Project>{2C7EFD09-4722-4C6E-A84B-6F3C51323643}</Project></ProjectReference></ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>

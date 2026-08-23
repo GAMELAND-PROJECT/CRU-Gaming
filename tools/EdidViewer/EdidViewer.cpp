@@ -1,6 +1,7 @@
 #include "DisplayCapabilitiesSnapshot.h"
 #include "DisplayTimingReport.h"
 #include "EdidDocument.h"
+#include "MonitorDiscovery.h"
 
 #include <windows.h>
 #include <commdlg.h>
@@ -16,8 +17,13 @@
 namespace
 {
 constexpr int open_button_id = 1001;
+constexpr int monitor_combo_id = 1002;
+constexpr int refresh_button_id = 1003;
 HWND output_control = nullptr;
 HWND open_button = nullptr;
+HWND monitor_combo = nullptr;
+HWND refresh_button = nullptr;
+std::vector<cru::viewer::ConnectedMonitor> connected_monitors;
 
 std::wstring manufacturer_name(std::uint16_t id)
 {
@@ -81,6 +87,18 @@ std::wstring format_report(const cru::core::DisplayCapabilitiesSnapshot &capabil
 	return text.str();
 }
 
+void show_edid(HWND owner, const std::vector<std::uint8_t> &bytes)
+{
+	const auto document = cru::core::EdidDocumentParser::parse(bytes);
+	if (!document)
+	{
+		MessageBoxW(owner, L"The selected source does not contain a valid complete EDID.", L"CRU Gaming EDID Viewer", MB_OK | MB_ICONERROR);
+		return;
+	}
+	const cru::core::DisplayCapabilitiesSnapshot capabilities(*document);
+	SetWindowTextW(output_control, format_report(capabilities).c_str());
+}
+
 void open_edid(HWND owner)
 {
 	wchar_t path[MAX_PATH] = {};
@@ -94,21 +112,46 @@ void open_edid(HWND owner)
 	if (!GetOpenFileNameW(&dialog)) return;
 
 	const auto bytes = read_file(path);
-	const auto document = bytes ? cru::core::EdidDocumentParser::parse(*bytes) : std::nullopt;
-	if (!document)
+	if (!bytes)
 	{
-		MessageBoxW(owner, L"The selected file is not a valid complete EDID.", L"CRU Gaming EDID Viewer", MB_OK | MB_ICONERROR);
+		MessageBoxW(owner, L"The selected file could not be read.", L"CRU Gaming EDID Viewer", MB_OK | MB_ICONERROR);
 		return;
 	}
-	const cru::core::DisplayCapabilitiesSnapshot capabilities(*document);
-	SetWindowTextW(output_control, format_report(capabilities).c_str());
+	show_edid(owner, *bytes);
+}
+
+void load_selected_monitor(HWND owner)
+{
+	const LRESULT selection = SendMessageW(monitor_combo, CB_GETCURSEL, 0U, 0U);
+	if (selection == CB_ERR || static_cast<std::size_t>(selection) >= connected_monitors.size()) return;
+	show_edid(owner, connected_monitors[static_cast<std::size_t>(selection)].edid);
+}
+
+void refresh_monitors(HWND owner)
+{
+	connected_monitors = cru::viewer::MonitorDiscovery::discover();
+	SendMessageW(monitor_combo, CB_RESETCONTENT, 0U, 0U);
+	for (const auto &monitor : connected_monitors)
+	{
+		const auto &label = monitor.name.empty() ? monitor.instance_id : monitor.name;
+		SendMessageW(monitor_combo, CB_ADDSTRING, 0U, reinterpret_cast<LPARAM>(label.c_str()));
+	}
+	if (connected_monitors.empty())
+	{
+		SetWindowTextW(output_control, L"No connected monitor with a readable EDID was found.\r\nYou can still use Open EDID... to inspect a file.");
+		return;
+	}
+	SendMessageW(monitor_combo, CB_SETCURSEL, 0U, 0U);
+	load_selected_monitor(owner);
 }
 
 void resize_controls(HWND window)
 {
 	RECT area = {};
 	GetClientRect(window, &area);
-	MoveWindow(open_button, 12, 12, 140, 30, TRUE);
+	MoveWindow(open_button, 12, 12, 120, 30, TRUE);
+	MoveWindow(monitor_combo, 144, 12, area.right - 280, 240, TRUE);
+	MoveWindow(refresh_button, area.right - 124, 12, 112, 30, TRUE);
 	MoveWindow(output_control, 12, 54, area.right - 24, area.bottom - 66, TRUE);
 }
 
@@ -118,6 +161,8 @@ LRESULT CALLBACK window_procedure(HWND window, UINT message, WPARAM w_param, LPA
 	{
 	case WM_COMMAND:
 		if (LOWORD(w_param) == open_button_id) open_edid(window);
+		else if (LOWORD(w_param) == refresh_button_id) refresh_monitors(window);
+		else if (LOWORD(w_param) == monitor_combo_id && HIWORD(w_param) == CBN_SELCHANGE) load_selected_monitor(window);
 		return 0;
 	case WM_SIZE:
 		resize_controls(window);
@@ -149,15 +194,22 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR, int show_command)
 
 	open_button = CreateWindowExW(0, L"BUTTON", L"Open EDID...", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
 		0, 0, 0, 0, window, reinterpret_cast<HMENU>(static_cast<INT_PTR>(open_button_id)), instance, nullptr);
+	monitor_combo = CreateWindowExW(0, L"COMBOBOX", L"", WS_CHILD | WS_VISIBLE | CBS_DROPDOWNLIST | WS_VSCROLL,
+		0, 0, 0, 0, window, reinterpret_cast<HMENU>(static_cast<INT_PTR>(monitor_combo_id)), instance, nullptr);
+	refresh_button = CreateWindowExW(0, L"BUTTON", L"Refresh monitors", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+		0, 0, 0, 0, window, reinterpret_cast<HMENU>(static_cast<INT_PTR>(refresh_button_id)), instance, nullptr);
 	output_control = CreateWindowExW(WS_EX_CLIENTEDGE, L"EDIT", L"Select a binary EDID file to inspect.",
 		WS_CHILD | WS_VISIBLE | WS_VSCROLL | ES_LEFT | ES_MULTILINE | ES_AUTOVSCROLL | ES_READONLY,
 		0, 0, 0, 0, window, nullptr, instance, nullptr);
-	if (!open_button || !output_control) return 1;
+	if (!open_button || !monitor_combo || !refresh_button || !output_control) return 1;
 
 	const auto font = reinterpret_cast<WPARAM>(GetStockObject(DEFAULT_GUI_FONT));
 	SendMessageW(open_button, WM_SETFONT, font, TRUE);
+	SendMessageW(monitor_combo, WM_SETFONT, font, TRUE);
+	SendMessageW(refresh_button, WM_SETFONT, font, TRUE);
 	SendMessageW(output_control, WM_SETFONT, font, TRUE);
 	resize_controls(window);
+	refresh_monitors(window);
 	ShowWindow(window, show_command);
 	UpdateWindow(window);
 

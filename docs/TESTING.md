@@ -43,7 +43,7 @@ Display timing report coverage verifies aggregation of two valid document timing
 
 For normal local validation, `tools/BuildPortableCore.ps1 -Configuration Debug -Platform x64` discovers MSBuild through Visual Studio Installer, builds the selected configuration, runs `PortableCoreTests`, and runs the `EdidInspect` smoke tests. It never installs or retargets a toolchain. `tools/InspectEdid.ps1` provides a stable wrapper for text output or saving a JSON report.
 
-`EdidViewer` is built in every solution configuration with warnings treated as errors. Its parsing and report logic is the same tested Portable Core path used by the CLI. The initial GUI acceptance check is manual: launch it, choose a binary EDID, verify that identity/timing/mode text appears, resize the window, and verify an invalid file produces an error without changing display state.
+`EdidViewer` is built in every solution configuration with warnings treated as errors. Its parsing and report logic is the same tested Portable Core path used by the CLI. The GUI acceptance check is manual: launch it, verify the connected-monitor selector is populated when Windows exposes readable EDIDs, switch monitors, use Refresh, choose a binary EDID, resize the window, and verify an invalid file produces an error. Discovery opens only the monitor device registry key with `KEY_READ`; no display state is changed.
 
 ## Test layers
 

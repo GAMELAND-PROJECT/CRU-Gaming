@@ -3,6 +3,7 @@
 #include "Cta861Extension.h"
 #include "CtaDataBlockView.h"
 #include "CtaVideoDataBlock.h"
+#include "CtaVicCatalog.h"
 
 #include <algorithm>
 #include <array>
@@ -221,6 +222,49 @@ void check_cta_data_block_view()
 		cru::core::CtaDataBlockView(reserved).type());
 }
 
+void check_cta_vic_catalog()
+{
+	const auto hd = cru::core::CtaVicCatalog::lookup(16U);
+	check_equal("CTA VIC 16", "known", true, hd.has_value());
+	if (hd) {
+		check_equal("CTA VIC 16", "horizontal active", 1920U, hd->horizontal_active);
+		check_equal("CTA VIC 16", "vertical active", 1080U, hd->vertical_active);
+		check_equal("CTA VIC 16", "scan mode", ScanMode::Progressive, hd->scan_mode);
+		check_equal("CTA VIC 16", "aspect", cru::core::CtaAspectRatio::SixteenByNine, hd->aspect_ratio);
+		check_equal("CTA VIC 16", "nominal refresh", 60000U, hd->nominal_refresh_rate_millihertz);
+		check_equal("CTA VIC 16", "legacy support", true, hd->supported_by_legacy_cru);
+	}
+
+	const auto interlaced = cru::core::CtaVicCatalog::lookup(5U);
+	check_equal("CTA VIC 5", "known", true, interlaced.has_value());
+	if (interlaced)
+		check_equal("CTA VIC 5", "scan mode", ScanMode::Interlaced, interlaced->scan_mode);
+
+	const auto uhd = cru::core::CtaVicCatalog::lookup(97U);
+	check_equal("CTA VIC 97", "known", true, uhd.has_value());
+	if (uhd) {
+		check_equal("CTA VIC 97", "horizontal active", 3840U, uhd->horizontal_active);
+		check_equal("CTA VIC 97", "vertical active", 2160U, uhd->vertical_active);
+		check_equal("CTA VIC 97", "nominal refresh", 60000U, uhd->nominal_refresh_rate_millihertz);
+	}
+
+	const auto extended = cru::core::CtaVicCatalog::lookup(193U);
+	check_equal("CTA VIC 193", "known", true, extended.has_value());
+	if (extended) {
+		check_equal("CTA VIC 193", "horizontal active", 5120U, extended->horizontal_active);
+		check_equal("CTA VIC 193", "nominal refresh", 120000U, extended->nominal_refresh_rate_millihertz);
+	}
+
+	const auto legacy_unsupported = cru::core::CtaVicCatalog::lookup(2U);
+	check_equal("CTA VIC 2", "known", true, legacy_unsupported.has_value());
+	if (legacy_unsupported)
+		check_equal("CTA VIC 2", "legacy support", false, legacy_unsupported->supported_by_legacy_cru);
+
+	check_equal("CTA VIC 0", "known", false, cru::core::CtaVicCatalog::lookup(0U).has_value());
+	check_equal("CTA VIC 128", "known", false, cru::core::CtaVicCatalog::lookup(128U).has_value());
+	check_equal("CTA VIC 220", "known", false, cru::core::CtaVicCatalog::lookup(220U).has_value());
+}
+
 }
 
 int main()
@@ -270,6 +314,7 @@ int main()
 	check_base_edid();
 	check_cta_extension();
 	check_cta_data_block_view();
+	check_cta_vic_catalog();
 
 	if (failures != 0)
 		return 1;

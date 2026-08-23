@@ -44,6 +44,7 @@
     <ClInclude Include="include\Cta861Extension.h" />
 	<ClInclude Include="include\CtaDataBlockView.h" />
 	<ClInclude Include="include\CtaVideoDataBlock.h" />
+	<ClInclude Include="include\CtaVicCatalog.h" />
     <ClInclude Include="include\EdidBaseBlock.h" />
     <ClInclude Include="include\DetailedTimingDescriptor.h" />
     <ClInclude Include="include\TimingSnapshot.h" />
@@ -52,6 +53,7 @@
     <ClCompile Include="src\Cta861Extension.cpp" />
 	<ClCompile Include="src\CtaDataBlockView.cpp" />
 	<ClCompile Include="src\CtaVideoDataBlock.cpp" />
+	<ClCompile Include="src\CtaVicCatalog.cpp" />
     <ClCompile Include="src\EdidBaseBlock.cpp" />
     <ClCompile Include="src\DetailedTimingDescriptor.cpp" />
     <ClCompile Include="src\TimingSnapshot.cpp" />

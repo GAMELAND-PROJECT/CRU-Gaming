@@ -27,6 +27,8 @@ CTA data-block view coverage checks typed Video, Extended, and reserved classifi
 
 CTA Video Data Block coverage decodes that real parser output into SVD entries and checks VIC/native handling. It also verifies CRU-compatible treatment of a native VIC in the 1-64 range, a full-byte extended VIC, and rejection of a non-video data block.
 
+CTA VIC catalog coverage checks progressive, interlaced, UHD, and extended VIC records against the existing Legacy `TVResolutionClass::Codes` values. It also covers a known-but-not-supported Legacy entry and unknown/reserved lookup failures.
+
 `EdidInspect` is built as a third project in `PortableCore.sln`. Run `EdidInspect <edid.bin>` to inspect a file. `tests/RunEdidInspectTests.ps1` converts the checked-in hex fixture to temporary binary files and verifies valid 1080p60 output, checksum rejection, and invalid-size rejection. The smoke test passes for Debug/Release on Win32/x64; parser correctness is also tested directly by `PortableCoreTests`.
 
 ## Test layers

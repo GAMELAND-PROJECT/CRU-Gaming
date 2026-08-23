@@ -37,6 +37,14 @@ It does not install or retarget Visual Studio. To inspect a binary EDID and save
 .\tools\InspectEdid.ps1 .\monitor-edid.bin -Json -OutputPath .\monitor-report.json
 ```
 
+The first read-only GUI is built with the same solution. Launch it with:
+
+```powershell
+.\x64\Debug\EdidViewer.exe
+```
+
+Use **Open EDID...** to select a `.bin` or `.dat` file. The viewer never reads a monitor or writes an override.
+
 ## EdidInspect smoke test
 
 `fixtures/edid-1080p60.hex` is the reviewable source for a valid 128-byte EDID fixture. The smoke-test script converts it to temporary binary files and deletes them afterward.

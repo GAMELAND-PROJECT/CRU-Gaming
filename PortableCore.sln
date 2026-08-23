@@ -8,6 +8,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PortableCoreTests", "tests\
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "EdidInspect", "tools\EdidInspect\EdidInspect.vcxproj", "{3C0CFF2C-9C61-46AE-B982-A1578644C006}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "EdidViewer", "tools\EdidViewer\EdidViewer.vcxproj", "{7E56AC5A-5B69-4CF6-9373-A142F4F542A8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -40,5 +42,13 @@ Global
 		{3C0CFF2C-9C61-46AE-B982-A1578644C006}.Release|Win32.Build.0 = Release|Win32
 		{3C0CFF2C-9C61-46AE-B982-A1578644C006}.Release|x64.ActiveCfg = Release|x64
 		{3C0CFF2C-9C61-46AE-B982-A1578644C006}.Release|x64.Build.0 = Release|x64
+		{7E56AC5A-5B69-4CF6-9373-A142F4F542A8}.Debug|Win32.ActiveCfg = Debug|Win32
+		{7E56AC5A-5B69-4CF6-9373-A142F4F542A8}.Debug|Win32.Build.0 = Debug|Win32
+		{7E56AC5A-5B69-4CF6-9373-A142F4F542A8}.Debug|x64.ActiveCfg = Debug|x64
+		{7E56AC5A-5B69-4CF6-9373-A142F4F542A8}.Debug|x64.Build.0 = Debug|x64
+		{7E56AC5A-5B69-4CF6-9373-A142F4F542A8}.Release|Win32.ActiveCfg = Release|Win32
+		{7E56AC5A-5B69-4CF6-9373-A142F4F542A8}.Release|Win32.Build.0 = Release|Win32
+		{7E56AC5A-5B69-4CF6-9373-A142F4F542A8}.Release|x64.ActiveCfg = Release|x64
+		{7E56AC5A-5B69-4CF6-9373-A142F4F542A8}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 EndGlobal

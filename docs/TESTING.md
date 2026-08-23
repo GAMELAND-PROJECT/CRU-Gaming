@@ -31,6 +31,8 @@ CTA VIC catalog coverage checks progressive, interlaced, UHD, and extended VIC r
 
 Advertised CTA video-mode coverage exercises the complete parsed extension to Video Data Block to SVD to VIC catalog path. Direct fixtures also verify native and extended VIC handling, preservation of an unknown VIC without fabricated metadata, and rejection of a non-video block.
 
+Full EDID document coverage uses a two-block fixture with one base DTD and one CTA extension containing both a Video Data Block and a DTD. Tests verify aggregated timings and modes, exact declared block-count enforcement, extension checksum rejection, and checksum-valid preservation of an unknown extension type.
+
 `EdidInspect` is built as a third project in `PortableCore.sln`. Run `EdidInspect <edid.bin>` to inspect a file. `tests/RunEdidInspectTests.ps1` converts the checked-in hex fixture to temporary binary files and verifies valid 1080p60 output, checksum rejection, and invalid-size rejection. The smoke test passes for Debug/Release on Win32/x64; parser correctness is also tested directly by `PortableCoreTests`.
 
 ## Test layers

@@ -1,5 +1,6 @@
 #include "DetailedTimingDescriptor.h"
 #include "EdidBaseBlock.h"
+#include "EdidDocument.h"
 #include "Cta861Extension.h"
 #include "CtaAdvertisedVideoModes.h"
 #include "CtaDataBlockView.h"
@@ -232,6 +233,54 @@ void check_cta_advertised_video_modes()
 		cru::core::CtaAdvertisedVideoModes::decode(audio).has_value());
 }
 
+void check_edid_document()
+{
+	cru::core::EdidBaseBlockParser::Bytes base = {};
+	const std::uint8_t header[] = {0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00};
+	std::copy(std::begin(header), std::end(header), base.begin());
+	base[8] = 0x10U; base[9] = 0xACU; base[18] = 1U; base[19] = 4U; base[126] = 1U;
+	const DetailedTimingDescriptor::Bytes dtd = {0x02,0x3A,0x80,0x18,0x71,0x38,0x2D,0x40,0x58,0x2C,0x45,0,0,0,0,0,0,0x1E};
+	std::copy(dtd.begin(), dtd.end(), base.begin() + 54);
+	std::uint32_t sum = 0U; for (std::size_t i = 0U; i < 127U; ++i) sum += base[i];
+	base[127] = static_cast<std::uint8_t>(0U - sum);
+
+	cru::core::Cta861ExtensionParser::Bytes cta = {};
+	cta[0] = 0x02U; cta[1] = 0x03U; cta[2] = 7U; cta[4] = 0x42U; cta[5] = 16U; cta[6] = 31U;
+	std::copy(dtd.begin(), dtd.end(), cta.begin() + 7);
+	sum = 0U; for (std::size_t i = 0U; i < 127U; ++i) sum += cta[i];
+	cta[127] = static_cast<std::uint8_t>(0U - sum);
+
+	std::vector<std::uint8_t> bytes;
+	bytes.insert(bytes.end(), base.begin(), base.end());
+	bytes.insert(bytes.end(), cta.begin(), cta.end());
+	const auto document = cru::core::EdidDocumentParser::parse(bytes);
+	check_equal("EDID document", "accepted", true, document.has_value());
+	if (document) {
+		check_equal("EDID document", "CTA count", 1U, document->cta_extensions.size());
+		check_equal("EDID document", "unknown extension count", 0U, document->unparsed_extensions.size());
+		check_equal("EDID document", "combined DTD count", 2U, document->detailed_timings.size());
+		check_equal("EDID document", "advertised mode count", 2U, document->advertised_video_modes.size());
+	}
+
+	auto truncated = bytes; truncated.resize(128U);
+	check_equal("EDID document truncated", "accepted", false,
+		cru::core::EdidDocumentParser::parse(truncated).has_value());
+	auto bad_checksum = bytes; bad_checksum[255] ^= 1U;
+	check_equal("EDID document checksum", "accepted", false,
+		cru::core::EdidDocumentParser::parse(bad_checksum).has_value());
+
+	auto unknown = bytes;
+	unknown[128] = 0x70U;
+	unknown[255] = 0U; sum = 0U; for (std::size_t i = 128U; i < 255U; ++i) sum += unknown[i];
+	unknown[255] = static_cast<std::uint8_t>(0U - sum);
+	const auto unknown_document = cru::core::EdidDocumentParser::parse(unknown);
+	check_equal("EDID unknown extension", "accepted", true, unknown_document.has_value());
+	if (unknown_document) {
+		check_equal("EDID unknown extension", "CTA count", 0U, unknown_document->cta_extensions.size());
+		check_equal("EDID unknown extension", "preserved", 1U, unknown_document->unparsed_extensions.size());
+	}
+}
+
 void check_cta_data_block_view()
 {
 	const cru::core::CtaDataBlock video = {2U, {16U, 31U}};
@@ -347,6 +396,7 @@ int main()
 	check_cta_data_block_view();
 	check_cta_vic_catalog();
 	check_cta_advertised_video_modes();
+	check_edid_document();
 
 	if (failures != 0)
 		return 1;

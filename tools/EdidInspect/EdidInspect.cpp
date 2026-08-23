@@ -1,10 +1,11 @@
-#include "EdidBaseBlock.h"
+#include "EdidDocument.h"
 
 #include <array>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <string>
+#include <vector>
 
 namespace
 {
@@ -40,22 +41,23 @@ int main(int argc, char *argv[])
 		return 2;
 	}
 
-	cru::core::EdidBaseBlockParser::Bytes bytes = {};
+	std::vector<std::uint8_t> bytes(static_cast<std::size_t>(size));
 	file.seekg(0);
 	file.read(reinterpret_cast<char *>(bytes.data()), bytes.size());
-	const auto edid = cru::core::EdidBaseBlockParser::parse(bytes);
+	const auto edid = cru::core::EdidDocumentParser::parse(bytes);
 	if (!edid)
 	{
-		std::cerr << "Error: invalid EDID base-block header, checksum, or timing data.\n";
+		std::cerr << "Error: invalid EDID structure, block count, or checksum.\n";
 		return 1;
 	}
 
-	std::cout << "Manufacturer: " << manufacturer_name(edid->manufacturer_id) << '\n'
-		<< "Product code: 0x" << std::hex << std::uppercase << std::setw(4) << std::setfill('0') << edid->product_code << std::dec << '\n'
-		<< "Serial number: " << edid->serial_number << '\n'
-		<< "EDID version: " << static_cast<unsigned>(edid->version) << '.' << static_cast<unsigned>(edid->revision) << '\n'
-		<< "Extension blocks: " << static_cast<unsigned>(edid->extension_count) << '\n'
-		<< "Detailed timings: " << edid->detailed_timings.size() << "\n\n";
+	std::cout << "Manufacturer: " << manufacturer_name(edid->base_block.manufacturer_id) << '\n'
+		<< "Product code: 0x" << std::hex << std::uppercase << std::setw(4) << std::setfill('0') << edid->base_block.product_code << std::dec << '\n'
+		<< "Serial number: " << edid->base_block.serial_number << '\n'
+		<< "EDID version: " << static_cast<unsigned>(edid->base_block.version) << '.' << static_cast<unsigned>(edid->base_block.revision) << '\n'
+		<< "Extension blocks: " << static_cast<unsigned>(edid->base_block.extension_count) << '\n'
+		<< "Detailed timings: " << edid->detailed_timings.size() << '\n'
+		<< "CTA advertised video modes: " << edid->advertised_video_modes.size() << "\n\n";
 
 	for (std::size_t index = 0; index < edid->detailed_timings.size(); ++index)
 	{
@@ -68,6 +70,17 @@ int main(int argc, char *argv[])
 			<< "   Vertical: " << timing.vertical().total << " total, " << timing.vertical().blanking << " blanking\n";
 	}
 
+	for (const auto &mode : edid->advertised_video_modes)
+	{
+		std::cout << "VIC " << static_cast<unsigned>(mode.descriptor.video_identification_code);
+		if (mode.descriptor.native)
+			std::cout << " (native)";
+		if (mode.catalog_info)
+			std::cout << ": " << mode.catalog_info->horizontal_active << 'x' << mode.catalog_info->vertical_active
+				<< (mode.catalog_info->scan_mode == cru::core::ScanMode::Interlaced ? 'i' : 'p')
+				<< " @ " << mode.catalog_info->nominal_refresh_rate_millihertz / 1000U << " Hz";
+		std::cout << '\n';
+	}
+
 	return 0;
 }
-

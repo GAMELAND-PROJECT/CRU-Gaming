@@ -1,6 +1,7 @@
 #include "DetailedTimingDescriptor.h"
 #include "EdidBaseBlock.h"
 #include "Cta861Extension.h"
+#include "CtaDataBlockView.h"
 #include "CtaVideoDataBlock.h"
 
 #include <algorithm>
@@ -199,6 +200,27 @@ void check_cta_extension()
 	check_equal("CTA overrun", "accepted", false, cru::core::Cta861ExtensionParser::parse(bytes).has_value());
 }
 
+void check_cta_data_block_view()
+{
+	const cru::core::CtaDataBlock video = {2U, {16U, 31U}};
+	const cru::core::CtaDataBlockView video_view(video);
+	check_equal("CTA block view", "video type", cru::core::CtaDataBlockType::Video, video_view.type());
+	check_equal("CTA block view", "payload size", 2U, video_view.payload().size());
+	check_equal("CTA block view", "video extended tag", false, video_view.extended_tag().has_value());
+
+	const cru::core::CtaDataBlock extended = {7U, {0x06U, 0x01U}};
+	const cru::core::CtaDataBlockView extended_view(extended);
+	check_equal("CTA block view", "extended type", cru::core::CtaDataBlockType::Extended, extended_view.type());
+	check_equal("CTA block view", "extended tag", 0x06U, extended_view.extended_tag().value_or(0xFFU));
+
+	const cru::core::CtaDataBlock empty_extended = {7U, {}};
+	check_equal("CTA block view", "empty extended tag", false,
+		cru::core::CtaDataBlockView(empty_extended).extended_tag().has_value());
+	const cru::core::CtaDataBlock reserved = {6U, {}};
+	check_equal("CTA block view", "reserved type", cru::core::CtaDataBlockType::Reserved,
+		cru::core::CtaDataBlockView(reserved).type());
+}
+
 }
 
 int main()
@@ -247,6 +269,7 @@ int main()
 	check_invalid_descriptors();
 	check_base_edid();
 	check_cta_extension();
+	check_cta_data_block_view();
 
 	if (failures != 0)
 		return 1;

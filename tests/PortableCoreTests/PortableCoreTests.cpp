@@ -10,6 +10,7 @@
 #include "CtaVideoDataBlock.h"
 #include "CtaVicCatalog.h"
 #include "TimingAnalyzer.h"
+#include "MonitorRangeLimits.h"
 
 #include <algorithm>
 #include <array>
@@ -175,6 +176,52 @@ void check_base_edid()
 		check_equal("base EDID", "extension count", 0U, parsed->extension_count);
 		check_equal("base EDID", "DTD count", 1U, parsed->detailed_timings.size());
 		check_equal("base EDID", "DTD width", 1920U, parsed->detailed_timings[0].horizontal().active);
+		check_equal("base EDID", "range limits", false, parsed->range_limits.has_value());
+	}
+
+	auto with_range = bytes;
+	with_range[75] = 0xFDU;
+	with_range[77] = 48U;
+	with_range[78] = 144U;
+	with_range[79] = 30U;
+	with_range[80] = 240U;
+	with_range[81] = 60U;
+	with_range[82] = 1U;
+	with_range[127] = 0U;
+	sum = 0U; for (std::size_t index = 0U; index < 127U; ++index) sum += with_range[index];
+	with_range[127] = static_cast<std::uint8_t>(0U - sum);
+	const auto ranged = cru::core::EdidBaseBlockParser::parse(with_range);
+	check_equal("base EDID range", "accepted", true, ranged.has_value());
+	if (ranged && ranged->range_limits) {
+		check_equal("base EDID range", "minimum vertical", 48U, ranged->range_limits->minimum_vertical_rate_hz);
+		check_equal("base EDID range", "maximum vertical", 144U, ranged->range_limits->maximum_vertical_rate_hz);
+		check_equal("base EDID range", "minimum horizontal", 30U, ranged->range_limits->minimum_horizontal_rate_khz);
+		check_equal("base EDID range", "maximum horizontal", 240U, ranged->range_limits->maximum_horizontal_rate_khz);
+		check_equal("base EDID range", "maximum pixel clock", 600000000U, ranged->range_limits->maximum_pixel_clock_hz);
+		check_equal("base EDID range", "formula", cru::core::SecondaryTimingFormula::NoTimingFormula,
+			ranged->range_limits->secondary_timing_formula);
+	}
+	const std::vector<std::uint8_t> ranged_document_bytes(with_range.begin(), with_range.end());
+	const auto ranged_document = cru::core::EdidDocumentParser::parse(ranged_document_bytes);
+	check_equal("range snapshot path", "document accepted", true, ranged_document.has_value());
+	if (ranged_document) {
+		const cru::core::DisplayCapabilitiesSnapshot ranged_snapshot(*ranged_document);
+		check_equal("range snapshot path", "range present", true, ranged_snapshot.range_limits().has_value());
+		if (ranged_snapshot.range_limits())
+			check_equal("range snapshot path", "maximum vertical", 144U,
+				ranged_snapshot.range_limits()->maximum_vertical_rate_hz);
+	}
+
+	const cru::core::MonitorRangeLimitsDescriptor::Bytes extended_range = {
+		0U, 0U, 0U, 0xFDU, 0x0FU, 5U, 10U, 15U, 20U, 30U, 4U, 0U, 0U, 0U, 0U, 0U, 0U, 0U};
+	const auto extended = cru::core::MonitorRangeLimitsDescriptor::parse(extended_range, true);
+	check_equal("extended range", "accepted", true, extended.has_value());
+	if (extended) {
+		check_equal("extended range", "minimum vertical", 260U, extended->minimum_vertical_rate_hz);
+		check_equal("extended range", "maximum vertical", 265U, extended->maximum_vertical_rate_hz);
+		check_equal("extended range", "minimum horizontal", 270U, extended->minimum_horizontal_rate_khz);
+		check_equal("extended range", "maximum horizontal", 275U, extended->maximum_horizontal_rate_khz);
+		check_equal("extended range", "formula", cru::core::SecondaryTimingFormula::Cvt, extended->secondary_timing_formula);
 	}
 
 	auto bad_header = bytes;

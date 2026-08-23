@@ -55,8 +55,19 @@ void write_json(
 		<< "    \"edid_version\": " << static_cast<unsigned>(capabilities.edid_version()) << ",\n"
 		<< "    \"edid_revision\": " << static_cast<unsigned>(capabilities.edid_revision()) << ",\n"
 		<< "    \"cta_extension_count\": " << capabilities.cta_extension_count() << ",\n"
-		<< "    \"unparsed_extension_count\": " << capabilities.unparsed_extension_count() << "\n"
-		<< "  },\n"
+		<< "    \"unparsed_extension_count\": " << capabilities.unparsed_extension_count() << ",\n"
+		<< "    \"advertised_range_limits\": ";
+	if (capabilities.range_limits())
+	{
+		const auto &range = *capabilities.range_limits();
+		std::cout << "{\"minimum_vertical_rate_hz\": " << range.minimum_vertical_rate_hz
+			<< ", \"maximum_vertical_rate_hz\": " << range.maximum_vertical_rate_hz
+			<< ", \"minimum_horizontal_rate_khz\": " << range.minimum_horizontal_rate_khz
+			<< ", \"maximum_horizontal_rate_khz\": " << range.maximum_horizontal_rate_khz
+			<< ", \"maximum_pixel_clock_hz\": " << range.maximum_pixel_clock_hz << "}\n";
+	}
+	else std::cout << "null\n";
+	std::cout << "  },\n"
 		<< "  \"timing_summary\": {\n"
 		<< "    \"total\": " << report.timings().size() << ",\n"
 		<< "    \"consistent\": " << report.consistent_timing_count() << ",\n"
@@ -157,6 +168,14 @@ int main(int argc, char *argv[])
 		<< "Consistent timings: " << timing_report.consistent_timing_count() << '\n'
 		<< "Inconsistent timings: " << timing_report.inconsistent_timing_count() << '\n'
 		<< "CTA advertised video modes: " << capabilities.advertised_video_modes().size() << "\n\n";
+	if (capabilities.range_limits())
+	{
+		const auto &range = *capabilities.range_limits();
+		std::cout << "EDID advertised limits (not measured hard limits):\n"
+			<< "Vertical: " << range.minimum_vertical_rate_hz << " - " << range.maximum_vertical_rate_hz << " Hz\n"
+			<< "Horizontal: " << range.minimum_horizontal_rate_khz << " - " << range.maximum_horizontal_rate_khz << " kHz\n"
+			<< "Maximum pixel clock: " << range.maximum_pixel_clock_hz << " Hz\n\n";
+	}
 
 	for (std::size_t index = 0; index < timing_report.timings().size(); ++index)
 	{

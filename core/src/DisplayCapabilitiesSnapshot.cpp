@@ -11,7 +11,8 @@ DisplayCapabilitiesSnapshot::DisplayCapabilitiesSnapshot(const EdidDocument &doc
 	  cta_extension_count_(document.cta_extensions.size()),
 	  unparsed_extension_count_(document.unparsed_extensions.size()),
 	  detailed_timings_(document.detailed_timings),
-	  advertised_video_modes_(document.advertised_video_modes)
+	  advertised_video_modes_(document.advertised_video_modes),
+	  range_limits_(document.base_block.range_limits)
 {
 }
 
@@ -27,5 +28,6 @@ const std::vector<CtaAdvertisedVideoMode> &DisplayCapabilitiesSnapshot::advertis
 {
 	return advertised_video_modes_;
 }
+const std::optional<MonitorRangeLimits> &DisplayCapabilitiesSnapshot::range_limits() const noexcept { return range_limits_; }
 
 } }

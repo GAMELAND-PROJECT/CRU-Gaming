@@ -67,6 +67,16 @@ std::wstring format_report(const cru::core::DisplayCapabilitiesSnapshot &capabil
 		<< L"Detailed timings: " << report.timings().size() << L" ("
 		<< report.consistent_timing_count() << L" consistent, "
 		<< report.inconsistent_timing_count() << L" inconsistent)\r\n\r\n";
+	if (capabilities.range_limits())
+	{
+		const auto &range = *capabilities.range_limits();
+		text << L"EDID advertised limits (not measured hard limits):\r\n"
+			<< L"Vertical: " << range.minimum_vertical_rate_hz << L" - " << range.maximum_vertical_rate_hz << L" Hz\r\n"
+			<< L"Horizontal: " << range.minimum_horizontal_rate_khz << L" - " << range.maximum_horizontal_rate_khz << L" kHz\r\n"
+			<< L"Maximum pixel clock: " << range.maximum_pixel_clock_hz / 1000000U << L" MHz\r\n\r\n";
+	}
+	else
+		text << L"EDID advertised limits: not present\r\n\r\n";
 
 	text << L"Advertised resolution ranges:\r\n";
 	for (const auto &resolution : inventory.resolutions())

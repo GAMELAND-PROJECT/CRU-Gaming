@@ -4,6 +4,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <optional>
 #include <vector>
 
 namespace cru { namespace core {
@@ -22,6 +23,7 @@ public:
 	std::size_t unparsed_extension_count() const noexcept;
 	const std::vector<TimingSnapshot> &detailed_timings() const noexcept;
 	const std::vector<CtaAdvertisedVideoMode> &advertised_video_modes() const noexcept;
+	const std::optional<MonitorRangeLimits> &range_limits() const noexcept;
 
 private:
 	std::uint16_t manufacturer_id_;
@@ -33,6 +35,7 @@ private:
 	std::size_t unparsed_extension_count_;
 	std::vector<TimingSnapshot> detailed_timings_;
 	std::vector<CtaAdvertisedVideoMode> advertised_video_modes_;
+	std::optional<MonitorRangeLimits> range_limits_;
 };
 
 } }

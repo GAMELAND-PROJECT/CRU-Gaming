@@ -1,6 +1,7 @@
 #pragma once
 
 #include "TimingSnapshot.h"
+#include "MonitorRangeLimits.h"
 
 #include <array>
 #include <cstdint>
@@ -18,6 +19,7 @@ struct EdidBaseBlock
 	std::uint8_t revision;
 	std::uint8_t extension_count;
 	std::vector<TimingSnapshot> detailed_timings;
+	std::optional<MonitorRangeLimits> range_limits;
 };
 
 class EdidBaseBlockParser
@@ -28,4 +30,3 @@ public:
 };
 
 } }
-

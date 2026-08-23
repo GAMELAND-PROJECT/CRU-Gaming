@@ -1,5 +1,6 @@
 #include "EdidBaseBlock.h"
 #include "DetailedTimingDescriptor.h"
+#include "MonitorRangeLimits.h"
 
 #include <algorithm>
 #include <iterator>
@@ -22,7 +23,7 @@ std::optional<EdidBaseBlock> EdidBaseBlockParser::parse(const Bytes &bytes)
 		static_cast<std::uint16_t>((bytes[8] << 8U) | bytes[9]),
 		static_cast<std::uint16_t>(bytes[10] | (bytes[11] << 8U)),
 		static_cast<std::uint32_t>(bytes[12] | (bytes[13] << 8U) | (bytes[14] << 16U) | (bytes[15] << 24U)),
-		bytes[18], bytes[19], bytes[126], {}};
+		bytes[18], bytes[19], bytes[126], {}, std::nullopt};
 
 	for (std::size_t offset = 54; offset < 126; offset += 18)
 	{
@@ -31,10 +32,12 @@ std::optional<EdidBaseBlock> EdidBaseBlockParser::parse(const Bytes &bytes)
 		const auto timing = DetailedTimingDescriptor::parse(descriptor);
 		if (timing)
 			result.detailed_timings.push_back(*timing);
+		else if (!result.range_limits)
+			result.range_limits = MonitorRangeLimitsDescriptor::parse(
+				descriptor, result.version > 1U || (result.version == 1U && result.revision >= 4U));
 	}
 
 	return result;
 }
 
 } }
-

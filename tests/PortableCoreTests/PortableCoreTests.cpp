@@ -1,6 +1,7 @@
 #include "DetailedTimingDescriptor.h"
 #include "DisplayCapabilitiesSnapshot.h"
 #include "DisplayTimingReport.h"
+#include "DisplayModeInventory.h"
 #include "EdidBaseBlock.h"
 #include "EdidDocument.h"
 #include "Cta861Extension.h"
@@ -292,6 +293,7 @@ void check_edid_document()
 		auto mutable_document = *document;
 		const cru::core::DisplayCapabilitiesSnapshot snapshot(mutable_document);
 		const cru::core::DisplayTimingReport report(snapshot);
+		const cru::core::DisplayModeInventory inventory(snapshot);
 		check_equal("capabilities snapshot", "manufacturer ID", 0x10ACU, snapshot.manufacturer_id());
 		check_equal("capabilities snapshot", "CTA count", 1U, snapshot.cta_extension_count());
 		check_equal("capabilities snapshot", "unknown extension count", 0U, snapshot.unparsed_extension_count());
@@ -301,6 +303,18 @@ void check_edid_document()
 		check_equal("display timing report", "consistent count", 2U, report.consistent_timing_count());
 		check_equal("display timing report", "inconsistent count", 0U, report.inconsistent_timing_count());
 		check_equal("display timing report", "all consistent", true, report.all_timings_consistent());
+		check_equal("display mode inventory", "deduplicated modes", 2U, inventory.modes().size());
+		check_equal("display mode inventory", "resolution count", 1U, inventory.resolutions().size());
+		if (inventory.resolutions().size() == 1U) {
+			const auto &resolution = inventory.resolutions()[0];
+			check_equal("display mode inventory", "width", 1920U, resolution.horizontal_active);
+			check_equal("display mode inventory", "height", 1080U, resolution.vertical_active);
+			check_equal("display mode inventory", "minimum refresh", 50000U, resolution.minimum_refresh_rate_millihertz);
+			check_equal("display mode inventory", "maximum refresh", 60000U, resolution.maximum_refresh_rate_millihertz);
+			check_equal("display mode inventory", "mode count", 2U, resolution.advertised_mode_count);
+			check_equal("display mode inventory", "has DTD", true, resolution.has_detailed_timing);
+			check_equal("display mode inventory", "has CTA", true, resolution.has_cta_vic);
+		}
 		mutable_document.detailed_timings.clear();
 		mutable_document.advertised_video_modes.clear();
 		mutable_document.cta_extensions.clear();
@@ -311,6 +325,10 @@ void check_edid_document()
 		const AxisTiming bad_horizontal = {1920U, 88U, 44U, 147U, 280U, 2200U, SyncPolarity::Positive};
 		const AxisTiming bad_vertical = {1080U, 4U, 5U, 36U, 45U, 1124U, SyncPolarity::Positive};
 		mutable_document = *document;
+		mutable_document.advertised_video_modes.push_back({{128U, false}, std::nullopt});
+		const cru::core::DisplayCapabilitiesSnapshot unresolved_snapshot(mutable_document);
+		check_equal("display mode inventory", "unresolved CTA count", 1U,
+			cru::core::DisplayModeInventory(unresolved_snapshot).unresolved_cta_mode_count());
 		mutable_document.detailed_timings.push_back(TimingSnapshot(
 			bad_horizontal, bad_vertical, 0U, 0U, 0U, ScanMode::Progressive,
 			TimingType::Manual, ReducedBlanking::Unknown));

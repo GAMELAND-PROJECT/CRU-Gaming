@@ -1,5 +1,6 @@
 #include "DisplayCapabilitiesSnapshot.h"
 #include "DisplayTimingReport.h"
+#include "DisplayModeInventory.h"
 #include "EdidDocument.h"
 #include "MonitorDiscovery.h"
 
@@ -34,6 +35,11 @@ std::wstring manufacturer_name(std::uint16_t id)
 	return name;
 }
 
+void append_refresh_rate(std::wostream &text, std::uint64_t millihertz)
+{
+	text << millihertz / 1000U << L'.' << std::setw(3) << std::setfill(L'0') << millihertz % 1000U;
+}
+
 std::optional<std::vector<std::uint8_t>> read_file(const std::wstring &path)
 {
 	std::ifstream file(std::filesystem::path(path), std::ios::binary | std::ios::ate);
@@ -50,6 +56,7 @@ std::optional<std::vector<std::uint8_t>> read_file(const std::wstring &path)
 std::wstring format_report(const cru::core::DisplayCapabilitiesSnapshot &capabilities)
 {
 	const cru::core::DisplayTimingReport report(capabilities);
+	const cru::core::DisplayModeInventory inventory(capabilities);
 	std::wostringstream text;
 	text << L"Manufacturer: " << manufacturer_name(capabilities.manufacturer_id()) << L"\r\n"
 		<< L"Product code: 0x" << std::hex << std::uppercase << std::setw(4) << std::setfill(L'0')
@@ -60,6 +67,21 @@ std::wstring format_report(const cru::core::DisplayCapabilitiesSnapshot &capabil
 		<< L"Detailed timings: " << report.timings().size() << L" ("
 		<< report.consistent_timing_count() << L" consistent, "
 		<< report.inconsistent_timing_count() << L" inconsistent)\r\n\r\n";
+
+	text << L"Advertised resolution ranges:\r\n";
+	for (const auto &resolution : inventory.resolutions())
+	{
+		text << resolution.horizontal_active << L'x' << resolution.vertical_active
+			<< (resolution.scan_mode == cru::core::ScanMode::Interlaced ? L'i' : L'p') << L": ";
+		append_refresh_rate(text, resolution.minimum_refresh_rate_millihertz);
+		text << L" - ";
+		append_refresh_rate(text, resolution.maximum_refresh_rate_millihertz);
+		text << L" Hz (" << resolution.advertised_mode_count << L" mode"
+			<< (resolution.advertised_mode_count == 1U ? L")" : L"s)") << L"\r\n";
+	}
+	if (inventory.unresolved_cta_mode_count() != 0U)
+		text << L"Unresolved CTA modes: " << inventory.unresolved_cta_mode_count() << L"\r\n";
+	text << L"\r\nDetailed timings:\r\n";
 
 	for (std::size_t index = 0; index < report.timings().size(); ++index)
 	{

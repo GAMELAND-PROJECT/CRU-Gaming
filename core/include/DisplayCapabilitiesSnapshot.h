@@ -22,6 +22,7 @@ public:
 	std::size_t cta_extension_count() const noexcept;
 	std::size_t unparsed_extension_count() const noexcept;
 	const std::vector<TimingSnapshot> &detailed_timings() const noexcept;
+	const std::vector<BaseAdvertisedTiming> &base_advertised_timings() const noexcept;
 	const std::vector<CtaAdvertisedVideoMode> &advertised_video_modes() const noexcept;
 	const std::optional<MonitorRangeLimits> &range_limits() const noexcept;
 
@@ -34,6 +35,7 @@ private:
 	std::size_t cta_extension_count_;
 	std::size_t unparsed_extension_count_;
 	std::vector<TimingSnapshot> detailed_timings_;
+	std::vector<BaseAdvertisedTiming> base_advertised_timings_;
 	std::vector<CtaAdvertisedVideoMode> advertised_video_modes_;
 	std::optional<MonitorRangeLimits> range_limits_;
 };

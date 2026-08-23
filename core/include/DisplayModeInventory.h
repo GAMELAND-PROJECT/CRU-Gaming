@@ -18,6 +18,8 @@ struct AdvertisedDisplayMode
 	std::optional<std::uint64_t> pixel_clock_hz;
 	bool from_detailed_timing;
 	bool from_cta_vic;
+	bool from_established_timing;
+	bool from_standard_timing;
 	bool native;
 };
 
@@ -31,6 +33,8 @@ struct DisplayResolutionSummary
 	std::size_t advertised_mode_count;
 	bool has_detailed_timing;
 	bool has_cta_vic;
+	bool has_established_timing;
+	bool has_standard_timing;
 	bool has_native_cta_mode;
 };
 

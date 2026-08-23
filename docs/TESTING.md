@@ -53,6 +53,8 @@ For normal local validation, `tools/BuildPortableCore.ps1 -Configuration Debug -
 
 `EdidViewer` is built in every solution configuration with warnings treated as errors. Its parsing and report logic is the same tested Portable Core path used by the CLI. The GUI acceptance check is manual: launch it, verify the connected-monitor selector is populated when Windows exposes readable EDIDs, switch monitors, use Refresh, choose a binary EDID, resize the window, and verify an invalid file produces an error. Discovery opens only the monitor device registry key with `KEY_READ`; no display state is changed.
 
+Base-block coverage includes Established Timings and EDID 1.3 Standard Timings. A Generic PNP fixture follows the complete base EDID → document → capabilities snapshot → mode inventory path and verifies 640×480 at 122 Hz, 800×600 at 110 Hz, and 1024×768 at 85 Hz. The test also verifies that no pixel clock is invented for Standard Timing records because EDID does not encode one there.
+
 ## Test layers
 
 | Layer | Runs without hardware/admin | Purpose |

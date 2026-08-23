@@ -13,6 +13,7 @@
 #include "MonitorRangeLimits.h"
 #include "RangeCapabilityEstimator.h"
 #include "TimingCandidateGenerator.h"
+#include "BaseAdvertisedTimings.h"
 
 #include <algorithm>
 #include <array>
@@ -273,6 +274,52 @@ void check_base_edid()
 
 	bytes[127] ^= 1U;
 	check_equal("bad checksum", "accepted", false, cru::core::EdidBaseBlockParser::parse(bytes).has_value());
+}
+
+void check_base_advertised_timings()
+{
+	const auto established = cru::core::BaseAdvertisedTimings::parse_established({0x24U, 0x10U, 0x80U});
+	check_equal("established timings", "count", 4U, established.size());
+	if (established.size() == 4U) {
+		check_equal("established timings", "first width", 640U, established[0].horizontal_active);
+		check_equal("established timings", "first refresh", 60000U, established[0].refresh_rate_millihertz);
+		check_equal("established timings", "interlaced", ScanMode::Interlaced, established[2].scan_mode);
+		check_equal("established timings", "last width", 1152U, established[3].horizontal_active);
+	}
+
+	cru::core::EdidBaseBlockParser::Bytes bytes = {};
+	const std::uint8_t header[] = {0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00};
+	std::copy(std::begin(header), std::end(header), bytes.begin());
+	bytes[8] = 0x41U; bytes[9] = 0xD0U; bytes[10] = 0xFFU; bytes[11] = 0x09U;
+	bytes[18] = 1U; bytes[19] = 3U;
+	const std::array<std::uint8_t, 16> standard = {
+		0x61U, 0x59U, 0x45U, 0x72U, 0x31U, 0x7EU,
+		0x01U, 0x01U, 0x01U, 0x01U, 0x01U, 0x01U, 0x01U, 0x01U, 0x01U, 0x01U};
+	std::copy(standard.begin(), standard.end(), bytes.begin() + 38);
+	std::uint32_t sum = 0U;
+	for (std::size_t index = 0U; index < 127U; ++index) sum += bytes[index];
+	bytes[127] = static_cast<std::uint8_t>(0U - sum);
+
+	const std::vector<std::uint8_t> document_bytes(bytes.begin(), bytes.end());
+	const auto document = cru::core::EdidDocumentParser::parse(document_bytes);
+	check_equal("PNP standard timing path", "accepted", true, document.has_value());
+	if (document) {
+		const cru::core::DisplayCapabilitiesSnapshot snapshot(*document);
+		const cru::core::DisplayModeInventory inventory(snapshot);
+		check_equal("PNP standard timing path", "snapshot count", 3U, snapshot.base_advertised_timings().size());
+		check_equal("PNP standard timing path", "inventory count", 3U, inventory.modes().size());
+		if (inventory.modes().size() == 3U) {
+			check_equal("PNP standard timing path", "640 width", 640U, inventory.modes()[0].horizontal_active);
+			check_equal("PNP standard timing path", "640 refresh", 122000U, inventory.modes()[0].refresh_rate_millihertz);
+			check_equal("PNP standard timing path", "800 width", 800U, inventory.modes()[1].horizontal_active);
+			check_equal("PNP standard timing path", "800 refresh", 110000U, inventory.modes()[1].refresh_rate_millihertz);
+			check_equal("PNP standard timing path", "1024 width", 1024U, inventory.modes()[2].horizontal_active);
+			check_equal("PNP standard timing path", "1024 refresh", 85000U, inventory.modes()[2].refresh_rate_millihertz);
+			check_equal("PNP standard timing path", "source", true, inventory.modes()[2].from_standard_timing);
+			check_equal("PNP standard timing path", "pixel clock absent", false,
+				inventory.modes()[2].pixel_clock_hz.has_value());
+		}
+	}
 }
 
 void check_cta_extension()
@@ -559,6 +606,7 @@ int main()
 	check_invalid_descriptors();
 	check_timing_analyzer();
 	check_base_edid();
+	check_base_advertised_timings();
 	check_cta_extension();
 	check_cta_data_block_view();
 	check_cta_vic_catalog();

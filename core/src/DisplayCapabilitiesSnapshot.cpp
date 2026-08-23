@@ -11,6 +11,7 @@ DisplayCapabilitiesSnapshot::DisplayCapabilitiesSnapshot(const EdidDocument &doc
 	  cta_extension_count_(document.cta_extensions.size()),
 	  unparsed_extension_count_(document.unparsed_extensions.size()),
 	  detailed_timings_(document.detailed_timings),
+	  base_advertised_timings_(document.base_block.base_advertised_timings),
 	  advertised_video_modes_(document.advertised_video_modes),
 	  range_limits_(document.base_block.range_limits)
 {
@@ -24,6 +25,10 @@ std::uint8_t DisplayCapabilitiesSnapshot::edid_revision() const noexcept { retur
 std::size_t DisplayCapabilitiesSnapshot::cta_extension_count() const noexcept { return cta_extension_count_; }
 std::size_t DisplayCapabilitiesSnapshot::unparsed_extension_count() const noexcept { return unparsed_extension_count_; }
 const std::vector<TimingSnapshot> &DisplayCapabilitiesSnapshot::detailed_timings() const noexcept { return detailed_timings_; }
+const std::vector<BaseAdvertisedTiming> &DisplayCapabilitiesSnapshot::base_advertised_timings() const noexcept
+{
+	return base_advertised_timings_;
+}
 const std::vector<CtaAdvertisedVideoMode> &DisplayCapabilitiesSnapshot::advertised_video_modes() const noexcept
 {
 	return advertised_video_modes_;

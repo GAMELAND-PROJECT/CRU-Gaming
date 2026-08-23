@@ -2,6 +2,7 @@
 
 #include "TimingSnapshot.h"
 #include "MonitorRangeLimits.h"
+#include "BaseAdvertisedTimings.h"
 
 #include <array>
 #include <cstdint>
@@ -20,6 +21,7 @@ struct EdidBaseBlock
 	std::uint8_t extension_count;
 	std::vector<TimingSnapshot> detailed_timings;
 	std::optional<MonitorRangeLimits> range_limits;
+	std::vector<BaseAdvertisedTiming> base_advertised_timings;
 };
 
 class EdidBaseBlockParser

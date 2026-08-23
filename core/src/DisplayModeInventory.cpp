@@ -31,7 +31,18 @@ DisplayModeInventory::DisplayModeInventory(const DisplayCapabilitiesSnapshot &ca
 		modes_.push_back({
 			timing.horizontal().active, timing.vertical().active,
 			timing.refresh_rate_millihertz(), timing.scan_mode(),
-			timing.pixel_clock_hz(), true, false, false});
+			timing.pixel_clock_hz(), true, false, false, false, false});
+	}
+
+	for (const auto &timing : capabilities.base_advertised_timings())
+	{
+		modes_.push_back({
+			timing.horizontal_active, timing.vertical_active,
+			timing.refresh_rate_millihertz, timing.scan_mode, std::nullopt,
+			false, false,
+			timing.source == BaseTimingSource::Established,
+			timing.source == BaseTimingSource::Standard,
+			false});
 	}
 
 	for (const auto &mode : capabilities.advertised_video_modes())
@@ -44,7 +55,7 @@ DisplayModeInventory::DisplayModeInventory(const DisplayCapabilitiesSnapshot &ca
 		const auto &info = *mode.catalog_info;
 		AdvertisedDisplayMode candidate = {
 			info.horizontal_active, info.vertical_active, info.nominal_refresh_rate_millihertz,
-			info.scan_mode, std::nullopt, false, true, mode.descriptor.native};
+			info.scan_mode, std::nullopt, false, true, false, false, mode.descriptor.native};
 		const auto existing = std::find_if(modes_.begin(), modes_.end(),
 			[&candidate](const AdvertisedDisplayMode &value) { return same_mode(value, candidate); });
 		if (existing == modes_.end()) modes_.push_back(candidate);
@@ -67,6 +78,8 @@ DisplayModeInventory::DisplayModeInventory(const DisplayCapabilitiesSnapshot &ca
 			if (!existing.pixel_clock_hz && mode.pixel_clock_hz) existing.pixel_clock_hz = mode.pixel_clock_hz;
 			existing.from_detailed_timing = existing.from_detailed_timing || mode.from_detailed_timing;
 			existing.from_cta_vic = existing.from_cta_vic || mode.from_cta_vic;
+			existing.from_established_timing = existing.from_established_timing || mode.from_established_timing;
+			existing.from_standard_timing = existing.from_standard_timing || mode.from_standard_timing;
 			existing.native = existing.native || mode.native;
 		}
 	}
@@ -82,7 +95,8 @@ DisplayModeInventory::DisplayModeInventory(const DisplayCapabilitiesSnapshot &ca
 			resolutions_.push_back({
 				mode.horizontal_active, mode.vertical_active, mode.scan_mode,
 				mode.refresh_rate_millihertz, mode.refresh_rate_millihertz, 1U,
-				mode.from_detailed_timing, mode.from_cta_vic, mode.native});
+				mode.from_detailed_timing, mode.from_cta_vic,
+				mode.from_established_timing, mode.from_standard_timing, mode.native});
 		}
 		else
 		{
@@ -92,6 +106,8 @@ DisplayModeInventory::DisplayModeInventory(const DisplayCapabilitiesSnapshot &ca
 			++summary.advertised_mode_count;
 			summary.has_detailed_timing = summary.has_detailed_timing || mode.from_detailed_timing;
 			summary.has_cta_vic = summary.has_cta_vic || mode.from_cta_vic;
+			summary.has_established_timing = summary.has_established_timing || mode.from_established_timing;
+			summary.has_standard_timing = summary.has_standard_timing || mode.from_standard_timing;
 			summary.has_native_cta_mode = summary.has_native_cta_mode || mode.native;
 		}
 	}

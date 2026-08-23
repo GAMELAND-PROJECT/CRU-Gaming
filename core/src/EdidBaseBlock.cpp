@@ -1,6 +1,7 @@
 #include "EdidBaseBlock.h"
 #include "DetailedTimingDescriptor.h"
 #include "MonitorRangeLimits.h"
+#include "BaseAdvertisedTimings.h"
 
 #include <algorithm>
 #include <iterator>
@@ -23,7 +24,14 @@ std::optional<EdidBaseBlock> EdidBaseBlockParser::parse(const Bytes &bytes)
 		static_cast<std::uint16_t>((bytes[8] << 8U) | bytes[9]),
 		static_cast<std::uint16_t>(bytes[10] | (bytes[11] << 8U)),
 		static_cast<std::uint32_t>(bytes[12] | (bytes[13] << 8U) | (bytes[14] << 16U) | (bytes[15] << 24U)),
-		bytes[18], bytes[19], bytes[126], {}, std::nullopt};
+		bytes[18], bytes[19], bytes[126], {}, std::nullopt, {}};
+	BaseAdvertisedTimings::EstablishedBytes established = {bytes[35], bytes[36], bytes[37]};
+	BaseAdvertisedTimings::StandardBytes standard;
+	std::copy_n(bytes.begin() + 38, standard.size(), standard.begin());
+	result.base_advertised_timings = BaseAdvertisedTimings::parse_established(established);
+	const auto standard_timings = BaseAdvertisedTimings::parse_standard(standard, result.version, result.revision);
+	result.base_advertised_timings.insert(
+		result.base_advertised_timings.end(), standard_timings.begin(), standard_timings.end());
 
 	for (std::size_t offset = 54; offset < 126; offset += 18)
 	{

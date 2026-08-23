@@ -19,6 +19,10 @@ The baseline implementation was built and executed successfully in all four conf
 
 The test invokes only `DetailedTimingDescriptor::parse`; expected values are fixed constants derived from the legacy characterization fixtures. It verifies every timing component, explicit pixel-clock/rate units, polarity, scan mode, manual timing type, and `ReducedBlanking::Unknown`. Reduced blanking is intentionally unknown because the 18-byte DTD does not encode which formula produced its numbers.
 
+The same executable also exercises `EdidBaseBlockParser` with a valid 128-byte base block containing a real 1080p60 DTD. It verifies the EDID header, checksum, manufacturer/product identifiers, version/revision, extension count, DTD extraction, and rejection of independently checksum-correct bad headers and bad checksums. No test writes an EDID or accesses a monitor.
+
+`EdidInspect` is built as a third project in `PortableCore.sln`. Run `EdidInspect <edid.bin>` to inspect a file. Its usage and missing-file error paths are smoke-tested manually; valid and malformed EDID content remains covered directly by `PortableCoreTests` so CLI output formatting is not coupled to parser correctness.
+
 ## Test layers
 
 | Layer | Runs without hardware/admin | Purpose |

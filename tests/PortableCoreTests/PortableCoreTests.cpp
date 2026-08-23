@@ -1,8 +1,11 @@
 #include "DetailedTimingDescriptor.h"
+#include "EdidBaseBlock.h"
 
+#include <algorithm>
 #include <array>
 #include <cstdint>
 #include <cstdio>
+#include <iterator>
 
 namespace
 {
@@ -113,6 +116,40 @@ void check_invalid_descriptors()
 	check_equal("porches exceed blanking", "accepted", false, DetailedTimingDescriptor::parse(invalid_blanking).has_value());
 }
 
+void check_base_edid()
+{
+	cru::core::EdidBaseBlockParser::Bytes bytes = {};
+	const std::uint8_t header[] = {0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00};
+	std::copy(std::begin(header), std::end(header), bytes.begin());
+	bytes[8] = 0x10; bytes[9] = 0xAC; bytes[10] = 0x34; bytes[11] = 0x12;
+	bytes[18] = 1; bytes[19] = 4;
+	const DetailedTimingDescriptor::Bytes dtd = {0x02, 0x3A, 0x80, 0x18, 0x71, 0x38, 0x2D, 0x40, 0x58, 0x2C, 0x45, 0, 0, 0, 0, 0, 0, 0x1E};
+	std::copy(dtd.begin(), dtd.end(), bytes.begin() + 54);
+	std::uint32_t sum = 0;
+	for (std::size_t index = 0; index < 127; ++index) sum += bytes[index];
+	bytes[127] = static_cast<std::uint8_t>(0U - sum);
+	const auto parsed = cru::core::EdidBaseBlockParser::parse(bytes);
+	check_equal("base EDID", "accepted", true, parsed.has_value());
+	if (parsed)
+	{
+		check_equal("base EDID", "manufacturer ID", 0x10ACU, parsed->manufacturer_id);
+		check_equal("base EDID", "product code", 0x1234U, parsed->product_code);
+		check_equal("base EDID", "version", 1U, parsed->version);
+		check_equal("base EDID", "revision", 4U, parsed->revision);
+		check_equal("base EDID", "extension count", 0U, parsed->extension_count);
+		check_equal("base EDID", "DTD count", 1U, parsed->detailed_timings.size());
+		check_equal("base EDID", "DTD width", 1920U, parsed->detailed_timings[0].horizontal().active);
+	}
+
+	auto bad_header = bytes;
+	bad_header[0] = 1U;
+	bad_header[127] = static_cast<std::uint8_t>(bad_header[127] - 1U);
+	check_equal("bad header", "accepted", false, cru::core::EdidBaseBlockParser::parse(bad_header).has_value());
+
+	bytes[127] ^= 1U;
+	check_equal("bad checksum", "accepted", false, cru::core::EdidBaseBlockParser::parse(bytes).has_value());
+}
+
 }
 
 int main()
@@ -159,11 +196,11 @@ int main()
 		check_timing(timing);
 
 	check_invalid_descriptors();
+	check_base_edid();
 
 	if (failures != 0)
 		return 1;
 
-	std::printf("Portable Core: %zu DTD fixtures and invalid-input checks passed.\n", timings.size());
+	std::printf("Portable Core: %zu DTD fixtures, base EDID parsing, and invalid-input checks passed.\n", timings.size());
 	return 0;
 }
-

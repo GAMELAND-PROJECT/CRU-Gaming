@@ -41,13 +41,14 @@
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="include\EdidBaseBlock.h" />
     <ClInclude Include="include\DetailedTimingDescriptor.h" />
     <ClInclude Include="include\TimingSnapshot.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\EdidBaseBlock.cpp" />
     <ClCompile Include="src\DetailedTimingDescriptor.cpp" />
     <ClCompile Include="src\TimingSnapshot.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>
-

@@ -1,6 +1,7 @@
 #include "DetailedTimingDescriptor.h"
 #include "EdidBaseBlock.h"
 #include "Cta861Extension.h"
+#include "CtaVideoDataBlock.h"
 
 #include <algorithm>
 #include <array>
@@ -169,8 +170,27 @@ void check_cta_extension()
 		check_equal("CTA", "blocks", 1U, parsed->data_blocks.size());
 		check_equal("CTA", "block tag", 2U, parsed->data_blocks[0].tag);
 		check_equal("CTA", "block payload", 2U, parsed->data_blocks[0].payload.size());
+		const auto video = cru::core::CtaVideoDataBlock::decode(parsed->data_blocks[0]);
+		check_equal("CTA video", "decoded", true, video.has_value());
+		if (video) {
+			check_equal("CTA video", "SVD count", 2U, video->size());
+			check_equal("CTA video", "first VIC", 16U, (*video)[0].video_identification_code);
+			check_equal("CTA video", "first native", false, (*video)[0].native);
+			check_equal("CTA video", "second VIC", 31U, (*video)[1].video_identification_code);
+		}
 		check_equal("CTA", "DTDs", 1U, parsed->detailed_timings.size());
 	}
+	const cru::core::CtaDataBlock native_video = {2U, {0x90U, 0xC1U}};
+	const auto native_descriptors = cru::core::CtaVideoDataBlock::decode(native_video);
+	check_equal("CTA native video", "decoded", true, native_descriptors.has_value());
+	if (native_descriptors) {
+		check_equal("CTA native video", "native VIC", 16U, (*native_descriptors)[0].video_identification_code);
+		check_equal("CTA native video", "native flag", true, (*native_descriptors)[0].native);
+		check_equal("CTA native video", "extended VIC", 193U, (*native_descriptors)[1].video_identification_code);
+		check_equal("CTA native video", "extended native flag", false, (*native_descriptors)[1].native);
+	}
+	const cru::core::CtaDataBlock audio = {1U, {0x90U}};
+	check_equal("CTA non-video", "decoded", false, cru::core::CtaVideoDataBlock::decode(audio).has_value());
 	auto bad_tag = bytes; bad_tag[0] = 0x03; bad_tag[127] = static_cast<std::uint8_t>(bad_tag[127] - 1U);
 	check_equal("CTA tag", "accepted", false, cru::core::Cta861ExtensionParser::parse(bad_tag).has_value());
 	auto bad_checksum = bytes; bad_checksum[127] ^= 1U;

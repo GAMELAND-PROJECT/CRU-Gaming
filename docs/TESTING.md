@@ -23,6 +23,8 @@ The same executable also exercises `EdidBaseBlockParser` with a valid 128-byte b
 
 CTA structural coverage uses a revision-3 extension containing a Video Data Block and a 1080p60 DTD. Tests assert header flags, raw tag/payload preservation, DTD extraction, and rejection of a wrong extension tag, bad checksum, and a data-block length that crosses the declared DTD offset.
 
+CTA Video Data Block coverage decodes that real parser output into SVD entries and checks VIC/native handling. It also verifies CRU-compatible treatment of a native VIC in the 1-64 range, a full-byte extended VIC, and rejection of a non-video data block.
+
 `EdidInspect` is built as a third project in `PortableCore.sln`. Run `EdidInspect <edid.bin>` to inspect a file. `tests/RunEdidInspectTests.ps1` converts the checked-in hex fixture to temporary binary files and verifies valid 1080p60 output, checksum rejection, and invalid-size rejection. The smoke test passes for Debug/Release on Win32/x64; parser correctness is also tested directly by `PortableCoreTests`.
 
 ## Test layers

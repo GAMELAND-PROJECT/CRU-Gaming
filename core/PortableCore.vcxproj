@@ -42,12 +42,14 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="include\Cta861Extension.h" />
+	<ClInclude Include="include\CtaVideoDataBlock.h" />
     <ClInclude Include="include\EdidBaseBlock.h" />
     <ClInclude Include="include\DetailedTimingDescriptor.h" />
     <ClInclude Include="include\TimingSnapshot.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Cta861Extension.cpp" />
+	<ClCompile Include="src\CtaVideoDataBlock.cpp" />
     <ClCompile Include="src\EdidBaseBlock.cpp" />
     <ClCompile Include="src\DetailedTimingDescriptor.cpp" />
     <ClCompile Include="src\TimingSnapshot.cpp" />

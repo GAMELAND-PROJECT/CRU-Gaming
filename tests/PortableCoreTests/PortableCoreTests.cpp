@@ -1,6 +1,7 @@
 #include "DetailedTimingDescriptor.h"
 #include "EdidBaseBlock.h"
 #include "Cta861Extension.h"
+#include "CtaAdvertisedVideoModes.h"
 #include "CtaDataBlockView.h"
 #include "CtaVideoDataBlock.h"
 #include "CtaVicCatalog.h"
@@ -181,6 +182,16 @@ void check_cta_extension()
 			check_equal("CTA video", "second VIC", 31U, (*video)[1].video_identification_code);
 		}
 		check_equal("CTA", "DTDs", 1U, parsed->detailed_timings.size());
+		const auto advertised = cru::core::CtaAdvertisedVideoModes::collect(*parsed);
+		check_equal("CTA advertised", "mode count", 2U, advertised.size());
+		if (advertised.size() == 2U) {
+			check_equal("CTA advertised", "first VIC", 16U, advertised[0].descriptor.video_identification_code);
+			check_equal("CTA advertised", "first known", true, advertised[0].catalog_info.has_value());
+			if (advertised[0].catalog_info) {
+				check_equal("CTA advertised", "first width", 1920U, advertised[0].catalog_info->horizontal_active);
+				check_equal("CTA advertised", "first height", 1080U, advertised[0].catalog_info->vertical_active);
+			}
+		}
 	}
 	const cru::core::CtaDataBlock native_video = {2U, {0x90U, 0xC1U}};
 	const auto native_descriptors = cru::core::CtaVideoDataBlock::decode(native_video);
@@ -199,6 +210,26 @@ void check_cta_extension()
 	check_equal("CTA checksum", "accepted", false, cru::core::Cta861ExtensionParser::parse(bad_checksum).has_value());
 	bytes[4] = 0x5F; sum = 0; for (std::size_t i = 0; i < 127; ++i) sum += bytes[i]; bytes[127] = static_cast<std::uint8_t>(0U - sum);
 	check_equal("CTA overrun", "accepted", false, cru::core::Cta861ExtensionParser::parse(bytes).has_value());
+}
+
+void check_cta_advertised_video_modes()
+{
+	const cru::core::CtaDataBlock video = {2U, {0x90U, 0xC1U, 0x80U}};
+	const auto modes = cru::core::CtaAdvertisedVideoModes::decode(video);
+	check_equal("CTA advertised direct", "decoded", true, modes.has_value());
+	if (modes && modes->size() == 3U) {
+		check_equal("CTA advertised direct", "mode count", 3U, modes->size());
+		check_equal("CTA advertised direct", "native flag", true, (*modes)[0].descriptor.native);
+		check_equal("CTA advertised direct", "native VIC", 16U, (*modes)[0].descriptor.video_identification_code);
+		check_equal("CTA advertised direct", "extended VIC", 193U, (*modes)[1].descriptor.video_identification_code);
+		check_equal("CTA advertised direct", "extended known", true, (*modes)[1].catalog_info.has_value());
+		check_equal("CTA advertised direct", "unknown VIC", 128U, (*modes)[2].descriptor.video_identification_code);
+		check_equal("CTA advertised direct", "unknown retained", false, (*modes)[2].catalog_info.has_value());
+	}
+
+	const cru::core::CtaDataBlock audio = {1U, {0x90U}};
+	check_equal("CTA advertised audio", "decoded", false,
+		cru::core::CtaAdvertisedVideoModes::decode(audio).has_value());
 }
 
 void check_cta_data_block_view()
@@ -315,6 +346,7 @@ int main()
 	check_cta_extension();
 	check_cta_data_block_view();
 	check_cta_vic_catalog();
+	check_cta_advertised_video_modes();
 
 	if (failures != 0)
 		return 1;

@@ -50,6 +50,7 @@
 	<ClInclude Include="include\DisplayCapabilitiesSnapshot.h" />
 	<ClInclude Include="include\DisplayTimingReport.h" />
 	<ClInclude Include="include\DisplayModeInventory.h" />
+	<ClInclude Include="include\GtfTimingCalculator.h" />
 	<ClInclude Include="include\EdidDocument.h" />
     <ClInclude Include="include\EdidBaseBlock.h" />
     <ClInclude Include="include\DetailedTimingDescriptor.h" />
@@ -69,6 +70,7 @@
 	<ClCompile Include="src\DisplayCapabilitiesSnapshot.cpp" />
 	<ClCompile Include="src\DisplayTimingReport.cpp" />
 	<ClCompile Include="src\DisplayModeInventory.cpp" />
+	<ClCompile Include="src\GtfTimingCalculator.cpp" />
 	<ClCompile Include="src\EdidDocument.cpp" />
     <ClCompile Include="src\EdidBaseBlock.cpp" />
     <ClCompile Include="src\DetailedTimingDescriptor.cpp" />

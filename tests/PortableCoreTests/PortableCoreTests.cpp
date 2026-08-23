@@ -14,6 +14,7 @@
 #include "RangeCapabilityEstimator.h"
 #include "TimingCandidateGenerator.h"
 #include "BaseAdvertisedTimings.h"
+#include "GtfTimingCalculator.h"
 
 #include <algorithm>
 #include <array>
@@ -322,6 +323,56 @@ void check_base_advertised_timings()
 	}
 }
 
+void check_gtf_timing_calculator()
+{
+	struct GtfExpected {
+		std::uint32_t horizontal_active;
+		std::uint32_t vertical_active;
+		std::uint64_t requested_refresh;
+		std::uint32_t horizontal_front;
+		std::uint32_t horizontal_sync;
+		std::uint32_t horizontal_back;
+		std::uint32_t horizontal_total;
+		std::uint32_t vertical_back;
+		std::uint32_t vertical_total;
+		std::uint64_t pixel_clock_hz;
+		std::uint64_t actual_refresh;
+		std::uint64_t horizontal_rate;
+	};
+	const std::array<GtfExpected, 3> fixtures = {{
+		{640U, 480U, 122000U, 40U, 64U, 104U, 848U, 32U, 516U, 53380000U, 121992U, 62948U},
+		{800U, 600U, 110000U, 48U, 88U, 136U, 1072U, 36U, 640U, 75470000U, 110001U, 70401U},
+		{1024U, 768U, 85000U, 64U, 112U, 176U, 1376U, 35U, 807U, 94390000U, 85002U, 68597U}
+	}};
+	for (const auto &expected : fixtures) {
+		const auto timing = cru::core::GtfTimingCalculator::calculate(
+			expected.horizontal_active, expected.vertical_active, expected.requested_refresh);
+		check_equal("GTF legacy parity", "calculated", true, timing.has_value());
+		if (!timing) continue;
+		check_equal("GTF legacy parity", "horizontal front", expected.horizontal_front, timing->horizontal().front_porch);
+		check_equal("GTF legacy parity", "horizontal sync", expected.horizontal_sync, timing->horizontal().sync_width);
+		check_equal("GTF legacy parity", "horizontal back", expected.horizontal_back, timing->horizontal().back_porch);
+		check_equal("GTF legacy parity", "horizontal total", expected.horizontal_total, timing->horizontal().total);
+		check_equal("GTF legacy parity", "horizontal polarity", SyncPolarity::Negative, timing->horizontal().sync_polarity);
+		check_equal("GTF legacy parity", "vertical front", 1U, timing->vertical().front_porch);
+		check_equal("GTF legacy parity", "vertical sync", 3U, timing->vertical().sync_width);
+		check_equal("GTF legacy parity", "vertical back", expected.vertical_back, timing->vertical().back_porch);
+		check_equal("GTF legacy parity", "vertical total", expected.vertical_total, timing->vertical().total);
+		check_equal("GTF legacy parity", "vertical polarity", SyncPolarity::Positive, timing->vertical().sync_polarity);
+		check_equal("GTF legacy parity", "pixel clock", expected.pixel_clock_hz, timing->pixel_clock_hz());
+		check_equal("GTF legacy parity", "actual refresh", expected.actual_refresh, timing->refresh_rate_millihertz());
+		check_equal("GTF legacy parity", "horizontal rate", expected.horizontal_rate, timing->horizontal_rate_hz());
+		check_equal("GTF legacy parity", "timing type", TimingType::Gtf, timing->timing_type());
+		check_equal("GTF legacy parity", "reduced blanking", ReducedBlanking::NotReduced, timing->reduced_blanking());
+		check_equal("GTF legacy parity", "consistent", true,
+			cru::core::TimingAnalyzer::analyze(*timing).internally_consistent());
+	}
+	check_equal("GTF invalid", "zero active rejected", false,
+		cru::core::GtfTimingCalculator::calculate(0U, 480U, 60000U).has_value());
+	check_equal("GTF invalid", "zero refresh rejected", false,
+		cru::core::GtfTimingCalculator::calculate(640U, 480U, 0U).has_value());
+}
+
 void check_cta_extension()
 {
 	cru::core::Cta861ExtensionParser::Bytes bytes = {};
@@ -607,6 +658,7 @@ int main()
 	check_timing_analyzer();
 	check_base_edid();
 	check_base_advertised_timings();
+	check_gtf_timing_calculator();
 	check_cta_extension();
 	check_cta_data_block_view();
 	check_cta_vic_catalog();

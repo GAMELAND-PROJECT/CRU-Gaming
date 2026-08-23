@@ -21,7 +21,8 @@ enum class ScanMode
 
 enum class TimingType
 {
-	Manual
+	Manual,
+	Gtf
 };
 
 enum class ReducedBlanking
@@ -79,4 +80,3 @@ private:
 
 }
 }
-

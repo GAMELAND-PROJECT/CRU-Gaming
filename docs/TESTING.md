@@ -55,6 +55,8 @@ For normal local validation, `tools/BuildPortableCore.ps1 -Configuration Debug -
 
 Base-block coverage includes Established Timings and EDID 1.3 Standard Timings. A Generic PNP fixture follows the complete base EDID → document → capabilities snapshot → mode inventory path and verifies 640×480 at 122 Hz, 800×600 at 110 Hz, and 1024×768 at 85 Hz. The test also verifies that no pixel clock is invented for Standard Timing records because EDID does not encode one there.
 
+GTF fixtures reproduce the integer calculation and rounding used by legacy `DetailedResolutionClass::CalculateGTF` for those three Generic PNP Standard Timings. They verify porches, sync widths, totals, polarities, pixel clock, actual refresh, horizontal rate, timing type, and internal consistency. The viewer labels these results as calculated rather than measured.
+
 ## Test layers
 
 | Layer | Runs without hardware/admin | Purpose |

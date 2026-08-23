@@ -5,6 +5,7 @@
 #include "MonitorDiscovery.h"
 #include "RangeCapabilityEstimator.h"
 #include "TimingCandidateGenerator.h"
+#include "GtfTimingCalculator.h"
 
 #include <windows.h>
 #include <commdlg.h>
@@ -93,6 +94,26 @@ std::wstring format_report(const cru::core::DisplayCapabilitiesSnapshot &capabil
 	}
 	if (inventory.unresolved_cta_mode_count() != 0U)
 		text << L"Unresolved CTA modes: " << inventory.unresolved_cta_mode_count() << L"\r\n";
+	text << L"\r\nGTF estimates for Standard Timings (calculated, not measured):\r\n";
+	std::size_t gtf_count = 0U;
+	for (const auto &advertised : capabilities.base_advertised_timings())
+	{
+		if (advertised.source != cru::core::BaseTimingSource::Standard) continue;
+		const auto timing = cru::core::GtfTimingCalculator::calculate(
+			advertised.horizontal_active, advertised.vertical_active,
+			advertised.refresh_rate_millihertz, advertised.scan_mode);
+		if (!timing) continue;
+		++gtf_count;
+		text << advertised.horizontal_active << L'x' << advertised.vertical_active
+			<< (advertised.scan_mode == cru::core::ScanMode::Interlaced ? L'i' : L'p') << L" @ ";
+		append_refresh_rate(text, advertised.refresh_rate_millihertz);
+		text << L" Hz: " << timing->horizontal().total << L'x' << timing->vertical().total
+			<< L" total, " << timing->pixel_clock_hz() / 1000000U << L'.'
+			<< std::setw(3) << std::setfill(L'0') << timing->pixel_clock_hz() / 1000U % 1000U
+			<< L" MHz, " << timing->horizontal_rate_hz() / 1000U << L'.'
+			<< std::setw(3) << std::setfill(L'0') << timing->horizontal_rate_hz() % 1000U << L" kHz\r\n";
+	}
+	if (gtf_count == 0U) text << L"None\r\n";
 	text << L"\r\nDetailed timings:\r\n";
 
 	for (std::size_t index = 0; index < report.timings().size(); ++index)

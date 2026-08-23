@@ -43,6 +43,8 @@ Display mode inventory coverage combines duplicate 1080p60 DTD/CTA entries with 
 
 Monitor range-limit coverage injects a valid EDID 1.4 `0xFD` descriptor and verifies 48-144 Hz vertical, 30-240 kHz horizontal, 600 MHz maximum pixel clock, and secondary-formula decoding. A direct fixture verifies all four EDID 1.4 extended-offset bits. The values remain explicitly advertised limits, not overclocking conclusions.
 
+Range capability estimator coverage uses fixed 1080p totals to verify independent horizontal-scan and pixel-clock ceilings. One fixture is horizontal-limited and exceeds the advertised vertical maximum; another is pixel-clock-limited below it. Tests verify both the mathematical estimate and the separately EDID-bounded result, without generating or applying a timing.
+
 `EdidInspect` is built as a third project in `PortableCore.sln`. Run `EdidInspect <edid.bin>` for text or `EdidInspect --json <edid.bin>` for schema-versioned JSON. `tests/RunEdidInspectTests.ps1` converts the checked-in hex fixture to temporary binary files and verifies text and parsed JSON for base-only and CTA EDIDs, plus checksum and invalid-size rejection. The smoke test passes for Debug/Release on Win32/x64; parser correctness is also tested directly by `PortableCoreTests`.
 
 For normal local validation, `tools/BuildPortableCore.ps1 -Configuration Debug -Platform x64` discovers MSBuild through Visual Studio Installer, builds the selected configuration, runs `PortableCoreTests`, and runs the `EdidInspect` smoke tests. It never installs or retargets a toolchain. `tools/InspectEdid.ps1` provides a stable wrapper for text output or saving a JSON report.

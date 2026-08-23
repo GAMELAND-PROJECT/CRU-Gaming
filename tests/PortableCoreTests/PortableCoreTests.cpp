@@ -11,6 +11,7 @@
 #include "CtaVicCatalog.h"
 #include "TimingAnalyzer.h"
 #include "MonitorRangeLimits.h"
+#include "RangeCapabilityEstimator.h"
 
 #include <algorithm>
 #include <array>
@@ -132,6 +133,26 @@ void check_timing_analyzer()
 	check_equal("timing analyzer", "active ratio ppm", 837818U, analysis.active_pixel_ratio_ppm);
 	check_equal("timing analyzer", "calculated horizontal rate", 67500U, analysis.calculated_horizontal_rate_hz);
 	check_equal("timing analyzer", "calculated refresh", 60000U, analysis.calculated_refresh_rate_millihertz);
+	const cru::core::MonitorRangeLimits crt_limits = {
+		48U, 144U, 30U, 240U, 600000000U, cru::core::SecondaryTimingFormula::NoTimingFormula};
+	const auto estimate = cru::core::RangeCapabilityEstimator::estimate(timing, crt_limits);
+	check_equal("range estimator", "advertised maximum", 144000U, estimate.advertised_maximum_refresh_rate_millihertz);
+	check_equal("range estimator", "horizontal ceiling", 213333U, estimate.horizontal_scan_ceiling_millihertz);
+	check_equal("range estimator", "pixel clock ceiling", 242424U, estimate.pixel_clock_ceiling_millihertz);
+	check_equal("range estimator", "estimated ceiling", 213333U, estimate.estimated_timing_ceiling_millihertz);
+	check_equal("range estimator", "EDID-bounded ceiling", 144000U, estimate.advertised_timing_ceiling_millihertz);
+	check_equal("range estimator", "limiting source", cru::core::EstimatedLimitSource::HorizontalScan,
+		estimate.estimated_limit_source);
+	check_equal("range estimator", "exceeds advertised", true, estimate.estimate_exceeds_advertised_vertical_limit);
+
+	const cru::core::MonitorRangeLimits pixel_limited = {
+		48U, 85U, 30U, 255U, 150000000U, cru::core::SecondaryTimingFormula::DefaultGtf};
+	const auto pixel_estimate = cru::core::RangeCapabilityEstimator::estimate(timing, pixel_limited);
+	check_equal("range estimator pixel", "estimated ceiling", 60606U, pixel_estimate.estimated_timing_ceiling_millihertz);
+	check_equal("range estimator pixel", "limiting source", cru::core::EstimatedLimitSource::PixelClock,
+		pixel_estimate.estimated_limit_source);
+	check_equal("range estimator pixel", "exceeds advertised", false,
+		pixel_estimate.estimate_exceeds_advertised_vertical_limit);
 
 	const AxisTiming bad_horizontal = {1920U, 88U, 44U, 147U, 280U, 2200U, SyncPolarity::Positive};
 	const AxisTiming bad_vertical = {1080U, 4U, 5U, 36U, 45U, 1124U, SyncPolarity::Positive};

@@ -3,6 +3,7 @@
 #include "DisplayModeInventory.h"
 #include "EdidDocument.h"
 #include "MonitorDiscovery.h"
+#include "RangeCapabilityEstimator.h"
 
 #include <windows.h>
 #include <commdlg.h>
@@ -103,6 +104,16 @@ std::wstring format_report(const cru::core::DisplayCapabilitiesSnapshot &capabil
 			<< timing.refresh_rate_millihertz() % 1000U << L" Hz, "
 			<< timing.pixel_clock_hz() << L" Hz, "
 			<< (entry.analysis.internally_consistent() ? L"OK" : L"FAILED") << L"\r\n";
+		if (capabilities.range_limits())
+		{
+			const auto estimate = cru::core::RangeCapabilityEstimator::estimate(timing, *capabilities.range_limits());
+			text << L"   EDID-bounded ceiling: ";
+			append_refresh_rate(text, estimate.advertised_timing_ceiling_millihertz);
+			text << L" Hz; mathematical same-timing estimate: ";
+			append_refresh_rate(text, estimate.estimated_timing_ceiling_millihertz);
+			text << L" Hz" << (estimate.estimate_exceeds_advertised_vertical_limit ? L" (experimental territory)" : L"")
+				<< L"\r\n";
+		}
 	}
 
 	text << L"\r\nCTA advertised video modes: " << capabilities.advertised_video_modes().size() << L"\r\n";

@@ -1,4 +1,5 @@
 #include "EdidDocument.h"
+#include "DisplayCapabilitiesSnapshot.h"
 
 #include <array>
 #include <fstream>
@@ -50,18 +51,20 @@ int main(int argc, char *argv[])
 		std::cerr << "Error: invalid EDID structure, block count, or checksum.\n";
 		return 1;
 	}
+	const cru::core::DisplayCapabilitiesSnapshot capabilities(*edid);
 
-	std::cout << "Manufacturer: " << manufacturer_name(edid->base_block.manufacturer_id) << '\n'
-		<< "Product code: 0x" << std::hex << std::uppercase << std::setw(4) << std::setfill('0') << edid->base_block.product_code << std::dec << '\n'
-		<< "Serial number: " << edid->base_block.serial_number << '\n'
-		<< "EDID version: " << static_cast<unsigned>(edid->base_block.version) << '.' << static_cast<unsigned>(edid->base_block.revision) << '\n'
-		<< "Extension blocks: " << static_cast<unsigned>(edid->base_block.extension_count) << '\n'
-		<< "Detailed timings: " << edid->detailed_timings.size() << '\n'
-		<< "CTA advertised video modes: " << edid->advertised_video_modes.size() << "\n\n";
+	std::cout << "Manufacturer: " << manufacturer_name(capabilities.manufacturer_id()) << '\n'
+		<< "Product code: 0x" << std::hex << std::uppercase << std::setw(4) << std::setfill('0') << capabilities.product_code() << std::dec << '\n'
+		<< "Serial number: " << capabilities.serial_number() << '\n'
+		<< "EDID version: " << static_cast<unsigned>(capabilities.edid_version()) << '.' << static_cast<unsigned>(capabilities.edid_revision()) << '\n'
+		<< "CTA extensions: " << capabilities.cta_extension_count() << '\n'
+		<< "Unparsed extensions: " << capabilities.unparsed_extension_count() << '\n'
+		<< "Detailed timings: " << capabilities.detailed_timings().size() << '\n'
+		<< "CTA advertised video modes: " << capabilities.advertised_video_modes().size() << "\n\n";
 
-	for (std::size_t index = 0; index < edid->detailed_timings.size(); ++index)
+	for (std::size_t index = 0; index < capabilities.detailed_timings().size(); ++index)
 	{
-		const auto &timing = edid->detailed_timings[index];
+		const auto &timing = capabilities.detailed_timings()[index];
 		std::cout << index + 1 << ": " << timing.horizontal().active << 'x' << timing.vertical().active
 			<< (timing.interlaced() ? "i" : "p") << " @ "
 			<< timing.refresh_rate_millihertz() / 1000 << '.' << std::setw(3) << std::setfill('0') << timing.refresh_rate_millihertz() % 1000 << " Hz\n"
@@ -70,7 +73,7 @@ int main(int argc, char *argv[])
 			<< "   Vertical: " << timing.vertical().total << " total, " << timing.vertical().blanking << " blanking\n";
 	}
 
-	for (const auto &mode : edid->advertised_video_modes)
+	for (const auto &mode : capabilities.advertised_video_modes())
 	{
 		std::cout << "VIC " << static_cast<unsigned>(mode.descriptor.video_identification_code);
 		if (mode.descriptor.native)

@@ -1,4 +1,5 @@
 #include "DetailedTimingDescriptor.h"
+#include "DisplayCapabilitiesSnapshot.h"
 #include "EdidBaseBlock.h"
 #include "EdidDocument.h"
 #include "Cta861Extension.h"
@@ -260,6 +261,19 @@ void check_edid_document()
 		check_equal("EDID document", "unknown extension count", 0U, document->unparsed_extensions.size());
 		check_equal("EDID document", "combined DTD count", 2U, document->detailed_timings.size());
 		check_equal("EDID document", "advertised mode count", 2U, document->advertised_video_modes.size());
+		auto mutable_document = *document;
+		const cru::core::DisplayCapabilitiesSnapshot snapshot(mutable_document);
+		check_equal("capabilities snapshot", "manufacturer ID", 0x10ACU, snapshot.manufacturer_id());
+		check_equal("capabilities snapshot", "CTA count", 1U, snapshot.cta_extension_count());
+		check_equal("capabilities snapshot", "unknown extension count", 0U, snapshot.unparsed_extension_count());
+		check_equal("capabilities snapshot", "DTD count", 2U, snapshot.detailed_timings().size());
+		check_equal("capabilities snapshot", "advertised mode count", 2U, snapshot.advertised_video_modes().size());
+		mutable_document.detailed_timings.clear();
+		mutable_document.advertised_video_modes.clear();
+		mutable_document.cta_extensions.clear();
+		check_equal("capabilities snapshot independence", "CTA count", 1U, snapshot.cta_extension_count());
+		check_equal("capabilities snapshot independence", "DTD count", 2U, snapshot.detailed_timings().size());
+		check_equal("capabilities snapshot independence", "advertised mode count", 2U, snapshot.advertised_video_modes().size());
 	}
 
 	auto truncated = bytes; truncated.resize(128U);

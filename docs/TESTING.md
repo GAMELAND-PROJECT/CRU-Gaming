@@ -33,6 +33,8 @@ Advertised CTA video-mode coverage exercises the complete parsed extension to Vi
 
 Full EDID document coverage uses a two-block fixture with one base DTD and one CTA extension containing both a Video Data Block and a DTD. Tests verify aggregated timings and modes, exact declared block-count enforcement, extension checksum rejection, and checksum-valid preservation of an unknown extension type.
 
+Display capability snapshot coverage verifies copied identity, extension counts, DTDs, and advertised modes. The source `EdidDocument` collections are then cleared to prove that an existing snapshot owns its data and cannot be changed through later source mutation. `EdidInspect` consumes this snapshot in its executable smoke-test path.
+
 `EdidInspect` is built as a third project in `PortableCore.sln`. Run `EdidInspect <edid.bin>` to inspect a file. `tests/RunEdidInspectTests.ps1` converts the checked-in hex fixture to temporary binary files and verifies valid 1080p60 output, checksum rejection, and invalid-size rejection. The smoke test passes for Debug/Release on Win32/x64; parser correctness is also tested directly by `PortableCoreTests`.
 
 ## Test layers

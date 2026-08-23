@@ -7,6 +7,7 @@
 #include "CtaDataBlockView.h"
 #include "CtaVideoDataBlock.h"
 #include "CtaVicCatalog.h"
+#include "TimingAnalyzer.h"
 
 #include <algorithm>
 #include <array>
@@ -18,6 +19,7 @@ namespace
 {
 
 using cru::core::DetailedTimingDescriptor;
+using cru::core::AxisTiming;
 using cru::core::ReducedBlanking;
 using cru::core::ScanMode;
 using cru::core::SyncPolarity;
@@ -110,6 +112,31 @@ void check_timing(const ExpectedTiming &expected)
 	check_equal(expected.name, "reduced_blanking", ReducedBlanking::Unknown, snapshot.reduced_blanking());
 	check_equal(expected.name, "interlaced", expected.scan_mode == ScanMode::Interlaced, snapshot.interlaced());
 	check_equal(expected.name, "progressive", expected.scan_mode == ScanMode::Progressive, snapshot.progressive());
+	const auto analysis = cru::core::TimingAnalyzer::analyze(snapshot);
+	check_equal(expected.name, "internally consistent", true, analysis.internally_consistent());
+}
+
+void check_timing_analyzer()
+{
+	const AxisTiming horizontal = {1920U, 88U, 44U, 148U, 280U, 2200U, SyncPolarity::Positive};
+	const AxisTiming vertical = {1080U, 4U, 5U, 36U, 45U, 1125U, SyncPolarity::Positive};
+	const TimingSnapshot timing(horizontal, vertical, 148500000U, 60000U, 67500U,
+		ScanMode::Progressive, TimingType::Manual, ReducedBlanking::Unknown);
+	const auto analysis = cru::core::TimingAnalyzer::analyze(timing);
+	check_equal("timing analyzer", "consistent", true, analysis.internally_consistent());
+	check_equal("timing analyzer", "active pixels", 2073600U, analysis.active_pixels);
+	check_equal("timing analyzer", "total pixels", 2475000U, analysis.total_pixels);
+	check_equal("timing analyzer", "active ratio ppm", 837818U, analysis.active_pixel_ratio_ppm);
+	check_equal("timing analyzer", "calculated horizontal rate", 67500U, analysis.calculated_horizontal_rate_hz);
+	check_equal("timing analyzer", "calculated refresh", 60000U, analysis.calculated_refresh_rate_millihertz);
+
+	const AxisTiming bad_horizontal = {1920U, 88U, 44U, 147U, 280U, 2200U, SyncPolarity::Positive};
+	const AxisTiming bad_vertical = {1080U, 4U, 5U, 36U, 45U, 1124U, SyncPolarity::Positive};
+	const TimingSnapshot malformed(bad_horizontal, bad_vertical, 0U, 0U, 0U,
+		ScanMode::Progressive, TimingType::Manual, ReducedBlanking::Unknown);
+	const auto malformed_analysis = cru::core::TimingAnalyzer::analyze(malformed);
+	check_equal("timing analyzer malformed", "consistent", false, malformed_analysis.internally_consistent());
+	check_equal("timing analyzer malformed", "issue count", 3U, malformed_analysis.issues.size());
 }
 
 void check_invalid_descriptors()
@@ -405,6 +432,7 @@ int main()
 		check_timing(timing);
 
 	check_invalid_descriptors();
+	check_timing_analyzer();
 	check_base_edid();
 	check_cta_extension();
 	check_cta_data_block_view();

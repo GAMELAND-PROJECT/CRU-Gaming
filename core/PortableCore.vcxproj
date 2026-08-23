@@ -51,6 +51,7 @@
     <ClInclude Include="include\EdidBaseBlock.h" />
     <ClInclude Include="include\DetailedTimingDescriptor.h" />
     <ClInclude Include="include\TimingSnapshot.h" />
+	<ClInclude Include="include\TimingAnalyzer.h" />
   </ItemGroup>
   <ItemGroup>
 	<ClCompile Include="src\CtaAdvertisedVideoModes.cpp" />
@@ -63,6 +64,7 @@
     <ClCompile Include="src\EdidBaseBlock.cpp" />
     <ClCompile Include="src\DetailedTimingDescriptor.cpp" />
     <ClCompile Include="src\TimingSnapshot.cpp" />
+	<ClCompile Include="src\TimingAnalyzer.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>

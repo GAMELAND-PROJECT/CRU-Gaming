@@ -1,5 +1,6 @@
 #include "EdidDocument.h"
 #include "DisplayCapabilitiesSnapshot.h"
+#include "TimingAnalyzer.h"
 
 #include <array>
 #include <fstream>
@@ -65,12 +66,16 @@ int main(int argc, char *argv[])
 	for (std::size_t index = 0; index < capabilities.detailed_timings().size(); ++index)
 	{
 		const auto &timing = capabilities.detailed_timings()[index];
+		const auto analysis = cru::core::TimingAnalyzer::analyze(timing);
 		std::cout << index + 1 << ": " << timing.horizontal().active << 'x' << timing.vertical().active
 			<< (timing.interlaced() ? "i" : "p") << " @ "
 			<< timing.refresh_rate_millihertz() / 1000 << '.' << std::setw(3) << std::setfill('0') << timing.refresh_rate_millihertz() % 1000 << " Hz\n"
 			<< "   Pixel clock: " << timing.pixel_clock_hz() << " Hz\n"
 			<< "   Horizontal: " << timing.horizontal().total << " total, " << timing.horizontal().blanking << " blanking\n"
-			<< "   Vertical: " << timing.vertical().total << " total, " << timing.vertical().blanking << " blanking\n";
+			<< "   Vertical: " << timing.vertical().total << " total, " << timing.vertical().blanking << " blanking\n"
+			<< "   Internal consistency: " << (analysis.internally_consistent() ? "OK" : "FAILED") << '\n'
+			<< "   Active pixel ratio: " << analysis.active_pixel_ratio_ppm / 10000U << '.'
+			<< std::setw(2) << std::setfill('0') << (analysis.active_pixel_ratio_ppm / 100U) % 100U << "%\n";
 	}
 
 	for (const auto &mode : capabilities.advertised_video_modes())

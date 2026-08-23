@@ -22,7 +22,7 @@ try {
     [IO.File]::WriteAllBytes($validPath, $bytes)
     $output = & $executablePath $validPath 2>&1
     $text = $output -join [Environment]::NewLine
-    if ($LASTEXITCODE -ne 0 -or $text -notmatch '1920x1080p @ 60\.000 Hz') {
+    if ($LASTEXITCODE -ne 0 -or $text -notmatch '1920x1080p @ 60\.000 Hz' -or $text -notmatch 'Internal consistency: OK') {
         throw "Valid EDID inspection failed:`n$output"
     }
 

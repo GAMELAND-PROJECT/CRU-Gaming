@@ -22,3 +22,13 @@ The production source uses classic C++Builder pointer-to-member syntax, so curre
 ### EDID DTD limit
 
 An 18-byte EDID detailed timing descriptor stores pixel clock in an unsigned 16-bit field in 10 kHz units, limiting it to 655.35 MHz. A 2560×1440 progressive mode at 240 Hz requires more than 884.736 MHz even before blanking, so that requested case cannot be represented by this format. The fixture does not substitute a truncated or mislabeled descriptor. Coverage for that mode requires a format with a wider clock representation, such as the existing DisplayID detailed timing path, and belongs in a separate fixture.
+
+## EdidInspect smoke test
+
+`fixtures/edid-1080p60.hex` is the reviewable source for a valid 128-byte EDID fixture. The smoke-test script converts it to temporary binary files and deletes them afterward.
+
+```powershell
+.\tests\RunEdidInspectTests.ps1 -Executable .\x64\Debug\EdidInspect.exe
+```
+
+It verifies successful reporting of 1920×1080p60 and rejection of a corrupted checksum and a 127-byte file.

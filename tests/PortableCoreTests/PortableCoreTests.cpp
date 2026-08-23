@@ -1,5 +1,6 @@
 #include "DetailedTimingDescriptor.h"
 #include "EdidBaseBlock.h"
+#include "Cta861Extension.h"
 
 #include <algorithm>
 #include <array>
@@ -150,6 +151,22 @@ void check_base_edid()
 	check_equal("bad checksum", "accepted", false, cru::core::EdidBaseBlockParser::parse(bytes).has_value());
 }
 
+void check_cta_extension()
+{
+	cru::core::Cta861ExtensionParser::Bytes bytes = {};
+	bytes[0] = 0x02; bytes[1] = 0x03; bytes[2] = 7; bytes[3] = 0x70;
+	bytes[4] = 0x42; bytes[5] = 16; bytes[6] = 31;
+	const DetailedTimingDescriptor::Bytes dtd = {0x02,0x3A,0x80,0x18,0x71,0x38,0x2D,0x40,0x58,0x2C,0x45,0,0,0,0,0,0,0x1E};
+	std::copy(dtd.begin(), dtd.end(), bytes.begin() + 7);
+	std::uint32_t sum = 0; for (std::size_t i = 0; i < 127; ++i) sum += bytes[i];
+	bytes[127] = static_cast<std::uint8_t>(0U - sum);
+	const auto parsed = cru::core::Cta861ExtensionParser::parse(bytes);
+	check_equal("CTA", "accepted", true, parsed.has_value());
+	if (parsed) { check_equal("CTA", "blocks", 1U, parsed->data_blocks.size()); check_equal("CTA", "DTDs", 1U, parsed->detailed_timings.size()); }
+	bytes[4] = 0x5F; sum = 0; for (std::size_t i = 0; i < 127; ++i) sum += bytes[i]; bytes[127] = static_cast<std::uint8_t>(0U - sum);
+	check_equal("CTA overrun", "accepted", false, cru::core::Cta861ExtensionParser::parse(bytes).has_value());
+}
+
 }
 
 int main()
@@ -197,6 +214,7 @@ int main()
 
 	check_invalid_descriptors();
 	check_base_edid();
+	check_cta_extension();
 
 	if (failures != 0)
 		return 1;

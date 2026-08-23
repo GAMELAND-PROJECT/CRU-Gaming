@@ -21,7 +21,7 @@ The test invokes only `DetailedTimingDescriptor::parse`; expected values are fix
 
 The same executable also exercises `EdidBaseBlockParser` with a valid 128-byte base block containing a real 1080p60 DTD. It verifies the EDID header, checksum, manufacturer/product identifiers, version/revision, extension count, DTD extraction, and rejection of independently checksum-correct bad headers and bad checksums. No test writes an EDID or accesses a monitor.
 
-`EdidInspect` is built as a third project in `PortableCore.sln`. Run `EdidInspect <edid.bin>` to inspect a file. Its usage and missing-file error paths are smoke-tested manually; valid and malformed EDID content remains covered directly by `PortableCoreTests` so CLI output formatting is not coupled to parser correctness.
+`EdidInspect` is built as a third project in `PortableCore.sln`. Run `EdidInspect <edid.bin>` to inspect a file. `tests/RunEdidInspectTests.ps1` converts the checked-in hex fixture to temporary binary files and verifies valid 1080p60 output, checksum rejection, and invalid-size rejection. The smoke test passes for Debug/Release on Win32/x64; parser correctness is also tested directly by `PortableCoreTests`.
 
 ## Test layers
 
